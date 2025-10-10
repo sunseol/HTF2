@@ -1,0 +1,28 @@
+{
+  "name": "html-to-figma-plugin",
+  "version": "1.0.0",
+  "description": "Convert HTML/CSS to Figma layers with AI enhancement",
+  "main": "dist/code.js",
+  "scripts": {
+    "build": "tsc && npm run bundle",
+    "bundle": "node build.js",
+    "watch": "tsc --watch",
+    "dev": "concurrently \"npm run watch\" \"npm run bundle:watch\"",
+    "bundle:watch": "nodemon --watch src --exec \"npm run bundle\""
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "html",
+    "converter"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.95.0",
+    "@types/node": "^20.12.7",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0",
+    "typescript": "^5.4.5"
+  }
+}

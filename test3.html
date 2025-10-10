@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전화 한국어 - DoA</title>
+    <style>
+        /* 전역 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #2c3e50;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .phone-container {
+            max-width: 450px;
+            width: 100%;
+            background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%);
+            border-radius: 30px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        /* 상단 정보 영역 */
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+            padding: 0 10px;
+        }
+
+        .persona-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .persona-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .settings-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .report-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .report-btn:hover {
+            color: white;
+        }
+
+        /* 프로필 영역 */
+        .profile-area {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 24px;
+        }
+
+        .avatar-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            padding: 8px;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .profile-name {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-id {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 20px;
+        }
+
+        .time-remaining {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        /* 통화 액션 버튼들 */
+        .call-actions {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .action-button {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .action-button.call {
+            background: #4CAF50;
+            width: 80px;
+            height: 80px;
+        }
+
+        .action-button.call:hover {
+            background: #45a049;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+        }
+
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        .action-button.call .action-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .action-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+        }
+
+        /* 통화 기록 영역 */
+        .call-history {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .history-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding: 0 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .history-list {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        /* 커스텀 스크롤바 */
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .history-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .history-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            min-width: 80px;
+        }
+
+        .history-duration {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+
+        .view-result {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-result:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 반응형 */
+        @media (max-width: 500px) {
+            .phone-container {
+                margin: 20px;
+            }
+
+            .call-actions {
+                gap: 30px;
+            }
+
+            .history-info {
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- 상단 정보 -->
+        <div class="top-info">
+            <button class="persona-btn">
+                <svg class="settings-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+                페르소나 설정
+            </button>
+            <button class="report-btn">문제 신고</button>
+        </div>
+
+        <!-- 프로필 영역 -->
+        <div class="profile-area">
+            <div class="avatar-container">
+                <div class="avatar-ring">
+                    <div class="avatar">DoA</div>
+                </div>
+            </div>
+            <h1 class="profile-name">DoA</h1>
+            <p class="profile-id">10200</p>
+            <div class="time-remaining">⏱ 남은 시간: 9분 12초</div>
+        </div>
+
+        <!-- 통화 액션 버튼 -->
+        <div class="call-actions">
+            <button class="action-button video">
+                <svg class="action-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+                </svg>
+                <span class="action-label">영상통화</span>
+            </button>
+
+            <button class="action-button call">
+                <svg class="action-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+                </svg>
+                <span class="action-label">통화 시작</span>
+            </button>
+
+            <button class="action-button message">
+                <svg class="action-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+                </svg>
+                <span class="action-label">메시지</span>
+            </button>
+        </div>
+
+        <!-- 통화 기록 -->
+        <div class="call-history">
+            <div class="history-header">통화 기록</div>
+            <div class="history-list">
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-date">25-09-22</div>
+                        <div class="history-duration">9분 12초</div>
+                    </div>
+                    <button class="view-result">결과보기</button>
+                </div>
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-date">25-09-22</div>
+                        <div class="history-duration">5분 13초</div>
+                    </div>
+                    <button class="view-result">결과보기</button>
+                </div>
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-date">25-09-22</div>
+                        <div class="history-duration">2분 34초</div>
+                    </div>
+                    <button class="view-result">결과보기</button>
+                </div>
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-date">25-09-21</div>
+                        <div class="history-duration">7분 45초</div>
+                    </div>
+                    <button class="view-result">결과보기</button>
+                </div>
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-date">25-09-21</div>
+                        <div class="history-duration">4분 23초</div>
+                    </div>
+                    <button class="view-result">결과보기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
