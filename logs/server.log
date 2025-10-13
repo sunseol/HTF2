@@ -285,3 +285,47 @@
 {"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:11:13.505Z"}
 {"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:11:31.734Z"}
 {"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:11:31.735Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T08:16:01.536Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T08:16:01.537Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760343365898-a1e05234-89c7-4f5d-8d04-2b46557f8361.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T08:16:05.902Z"}
+{"duration":4365.114200000011,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T08:16:05.903Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 24 with image data)","timestamp":"2025-10-13T08:16:05.954Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T08:16:05.962Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T08:16:05.969Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T08:16:05.969Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:17:45.064Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:17:45.085Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:03.759Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:03.786Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:15.743Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:15.769Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:35.475Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:18:35.486Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T08:20:11.971Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T08:20:11.971Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 6 image screenshots","timestamp":"2025-10-13T08:20:16.454Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760343616534-5c72af79-6db8-4ebe-9af8-b2a99d3b5a2f.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T08:20:16.537Z"}
+{"duration":4564.843699999998,"elementCount":355,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T08:20:16.537Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 23 images (6 logos, 5 icons, 6 with image data)","timestamp":"2025-10-13T08:20:16.582Z"}
+{"level":"info","message":"Recognized 36 component patterns","timestamp":"2025-10-13T08:20:16.588Z"}
+{"issuesFound":92,"level":"info","message":"Validation completed","nodesValidated":97,"overallScore":96,"timestamp":"2025-10-13T08:20:16.591Z"}
+{"grade":"A","issuesCount":92,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T08:20:16.592Z"}
+{"level":"info","message":"Running exact replica capture","timestamp":"2025-10-13T08:27:00.181Z","url":"https://example.com"}
+{"level":"info","message":"Captured 0 image screenshots","timestamp":"2025-10-13T08:27:01.680Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760344021774-f68f031f-f0e5-4cdc-9802-e7ec73dd9791.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T08:27:01.777Z"}
+{"duration":1594.6220999999996,"elementCount":11,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T08:27:01.777Z","title":"Example Domain","url":"https://example.com","width":1920}
+{"level":"info","message":"Found 0 images (0 logos, 0 icons, 0 with image data)","timestamp":"2025-10-13T08:27:01.850Z"}
+{"level":"info","message":"Recognized 0 component patterns","timestamp":"2025-10-13T08:27:01.916Z"}
+{"issuesFound":6,"level":"info","message":"Validation completed","nodesValidated":6,"overallScore":96,"timestamp":"2025-10-13T08:27:01.988Z"}
+{"grade":"A","issuesCount":6,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T08:27:01.989Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:28:37.450Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:28:37.465Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T08:35:13.448Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T08:35:13.449Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-13T08:35:18.110Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760344518209-1f28ac36-881c-4151-9e44-4ab68eebd00e.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T08:35:18.212Z"}
+{"duration":4762.474099999992,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T08:35:18.212Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-13T08:35:18.251Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T08:35:18.265Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T08:35:18.277Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T08:35:18.278Z"}

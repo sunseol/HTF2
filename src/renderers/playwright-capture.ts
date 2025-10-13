@@ -175,6 +175,42 @@ class PlaywrightCaptureEngine {
         );
       });
 
+      // Assign temporary IDs to all image elements FIRST (in a single evaluation context)
+      await page.evaluate(() => {
+        const imageElements = document.querySelectorAll('img, svg');
+        imageElements.forEach((el: any, index: number) => {
+          if (!el.dataset.tmpId) {
+            el.dataset.tmpId = `img-${index}-${Math.random().toString(36).substr(2, 9)}`;
+          }
+        });
+      });
+
+      // Capture screenshots of all images
+      const imageElements = await page.$$('img, svg');
+      const imageScreenshots = new Map<string, string>();
+
+      for (const element of imageElements) {
+        try {
+          const boundingBox = await element.boundingBox();
+          if (boundingBox && boundingBox.width > 0 && boundingBox.height > 0) {
+            // Take a screenshot of just this element
+            const screenshot = await element.screenshot({ type: 'png' });
+            const base64 = screenshot.toString('base64');
+            const dataUrl = `data:image/png;base64,${base64}`;
+
+            // Get the temporary ID we assigned earlier
+            const elementId = await element.evaluate((el: any) => el.dataset.tmpId);
+
+            if (elementId) {
+              imageScreenshots.set(elementId, dataUrl);
+            }
+          }
+        } catch (error) {
+          // Skip elements that can't be captured
+          console.warn('Could not capture element screenshot:', error);
+        }
+      }
+
       const rootSnapshotRaw = await page.evaluate(
         ({ styleKeys }) => {
           const keys = styleKeys as string[];
@@ -195,33 +231,6 @@ class PlaywrightCaptureEngine {
             }
 
             return cssVars;
-          };
-
-          // Convert image element to base64
-          const getImageData = async (imgElement: HTMLImageElement): Promise<string | undefined> => {
-            try {
-              // Skip if no src or data URL
-              if (!imgElement.src || imgElement.src.startsWith('data:')) {
-                return imgElement.src;
-              }
-
-              // Create a canvas to convert image to base64
-              const canvas = document.createElement('canvas');
-              canvas.width = imgElement.naturalWidth || imgElement.width;
-              canvas.height = imgElement.naturalHeight || imgElement.height;
-
-              const ctx = canvas.getContext('2d');
-              if (!ctx) return undefined;
-
-              // Draw image on canvas
-              ctx.drawImage(imgElement, 0, 0);
-
-              // Convert to base64
-              return canvas.toDataURL('image/png');
-            } catch (error) {
-              // CORS or other errors - return original src
-              return undefined;
-            }
           };
 
           const extract = (element: any, parentId?: string): Record<string, unknown> => {
@@ -249,66 +258,16 @@ class PlaywrightCaptureEngine {
               attributes[attr.name] = attr.value;
             });
 
-            // Extract image data for img and svg elements
+            // Get the temporary ID we assigned to image elements
             let imageData: string | undefined;
             const tagName = element.tagName.toLowerCase();
 
-            if (tagName === 'img') {
-              try {
-                const imgElement = element as HTMLImageElement;
-                const canvas = document.createElement('canvas');
-                const width = imgElement.naturalWidth || imgElement.width || rect.width || 100;
-                const height = imgElement.naturalHeight || imgElement.height || rect.height || 100;
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-
-                if (ctx && imgElement.complete) {
-                  // Try to draw the image
-                  try {
-                    ctx.drawImage(imgElement, 0, 0, width, height);
-                    imageData = canvas.toDataURL('image/png');
-                  } catch (drawError) {
-                    // CORS error - try to fetch and convert
-                    console.warn('Could not draw image due to CORS:', imgElement.src);
-                  }
-                }
-              } catch (error) {
-                console.error('Error capturing image:', error);
-              }
-            } else if (tagName === 'svg') {
-              try {
-                // Convert SVG to data URL
-                const svgElement = element as SVGElement;
-                const serializer = new XMLSerializer();
-                const svgString = serializer.serializeToString(svgElement);
-                const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-
-                // Create a data URL from SVG
-                const DOMURL = window.URL || window.webkitURL || window;
-                const url = DOMURL.createObjectURL(svgBlob);
-
-                // Draw SVG on canvas
-                const canvas = document.createElement('canvas');
-                const width = rect.width || 100;
-                const height = rect.height || 100;
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-
-                if (ctx) {
-                  const img = new Image();
-                  img.onload = () => {
-                    ctx.drawImage(img, 0, 0, width, height);
-                    DOMURL.revokeObjectURL(url);
-                  };
-                  img.src = url;
-
-                  // For now, just store the SVG string
-                  imageData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
-                }
-              } catch (error) {
-                console.error('Error capturing SVG:', error);
+            if (tagName === 'img' || tagName === 'svg') {
+              // Get the temporary ID from dataset
+              const tmpId = element.dataset?.tmpId;
+              if (tmpId) {
+                // Store the ID so we can match it later
+                attributes['data-tmp-id'] = tmpId;
               }
             }
 
@@ -372,6 +331,20 @@ class PlaywrightCaptureEngine {
       );
 
       const rootSnapshot = rootSnapshotRaw as unknown as HTMLNodeSnapshot;
+
+      // Apply image screenshots to the snapshot tree
+      const applyImageData = (snapshot: HTMLNodeSnapshot) => {
+        const tmpId = snapshot.attributes['data-tmp-id'];
+        if (tmpId && imageScreenshots.has(tmpId)) {
+          snapshot.imageData = imageScreenshots.get(tmpId);
+          // Clean up the temporary ID
+          delete snapshot.attributes['data-tmp-id'];
+        }
+        snapshot.children.forEach(applyImageData);
+      };
+      applyImageData(rootSnapshot);
+
+      logger.info(`Captured ${imageScreenshots.size} image screenshots`);
 
       if (options.enableScreenshot !== false) {
         try {

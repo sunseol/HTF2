@@ -807,18 +807,33 @@ async function createFigmaNodes(nodes) {
     nodeMap.clear();
     nodeDataMap.clear();
     nodes.forEach((node) => nodeDataMap.set(node.id, node));
+    // Calculate the bounding box of all nodes
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodes.forEach((node) => {
+        minX = Math.min(minX, node.boundingBox.x);
+        minY = Math.min(minY, node.boundingBox.y);
+        maxX = Math.max(maxX, node.boundingBox.x + node.boundingBox.width);
+        maxY = Math.max(maxY, node.boundingBox.y + node.boundingBox.height);
+    });
+    const containerWidth = maxX - minX;
+    const containerHeight = maxY - minY;
+    // Create a root container frame
+    const rootContainer = figma.createFrame();
+    rootContainer.name = 'HTML Import';
+    rootContainer.resize(Math.max(containerWidth, 100), Math.max(containerHeight, 100));
+    rootContainer.x = 0;
+    rootContainer.y = 0;
+    rootContainer.fills = []; // Transparent background
+    figma.currentPage.appendChild(rootContainer);
     // Sort nodes by dependency (parents first)
     const sortedNodes = topologicalSort(nodes);
     // Create nodes in order
     for (const nodeData of sortedNodes) {
-        await createNode(nodeData);
+        await createNode(nodeData, rootContainer, minX, minY);
     }
-    // Focus on the root nodes
-    const rootNodes = Array.from(nodeMap.values()).filter((node) => !nodes.find((n) => n.id === node.parentId));
-    if (rootNodes.length > 0) {
-        figma.currentPage.selection = rootNodes;
-        figma.viewport.scrollAndZoomIntoView(rootNodes);
-    }
+    // Focus on the root container
+    figma.currentPage.selection = [rootContainer];
+    figma.viewport.scrollAndZoomIntoView([rootContainer]);
 }
 function topologicalSort(nodes) {
     const sorted = [];
@@ -838,7 +853,7 @@ function topologicalSort(nodes) {
     nodes.forEach((node) => visit(node.id));
     return sorted;
 }
-async function createNode(nodeData) {
+async function createNode(nodeData, rootContainer, offsetX, offsetY) {
     var _a, _b;
     let node = null;
     try {
@@ -869,10 +884,11 @@ async function createNode(nodeData) {
             parentNode.appendChild(node);
         }
         else {
-            figma.currentPage.appendChild(node);
+            // Attach root nodes to the root container
+            rootContainer.appendChild(node);
         }
         applyLayoutParticipation(node, nodeData, parentData);
-        applyPosition(node, nodeData, parentData);
+        applyPosition(node, nodeData, parentData, offsetX, offsetY);
         return node;
     }
     catch (error) {
@@ -880,7 +896,7 @@ async function createNode(nodeData) {
         return null;
     }
 }
-function applyPosition(node, nodeData, parentData) {
+function applyPosition(node, nodeData, parentData, rootOffsetX = 0, rootOffsetY = 0) {
     const parentLayoutMode = (parentData === null || parentData === void 0 ? void 0 : parentData.layoutMode) && parentData.layoutMode !== 'NONE';
     const isAbsolute = nodeData.layoutPositioning === 'ABSOLUTE';
     const layoutNode = node;
@@ -888,13 +904,23 @@ function applyPosition(node, nodeData, parentData) {
     if (isAbsolute && 'layoutPositioning' in layoutNode) {
         layoutNode.layoutPositioning = 'ABSOLUTE';
     }
-    // Calculate position relative to parent
-    const offsetX = parentData ? parentData.boundingBox.x : 0;
-    const offsetY = parentData ? parentData.boundingBox.y : 0;
     // If parent has auto layout but child is not absolute, skip position setting
     // Figma auto layout will handle positioning
     if (parentLayoutMode && !isAbsolute) {
         return;
+    }
+    // Calculate position relative to parent or root
+    let offsetX;
+    let offsetY;
+    if (parentData) {
+        // Position relative to parent
+        offsetX = parentData.boundingBox.x;
+        offsetY = parentData.boundingBox.y;
+    }
+    else {
+        // Position relative to root container (apply global offset)
+        offsetX = rootOffsetX;
+        offsetY = rootOffsetY;
     }
     // Set position for:
     // 1. Nodes without auto layout parents
@@ -1012,6 +1038,14 @@ async function createImageNode(nodeData) {
     const imageSrc = (_b = (_a = nodeData.meta) === null || _a === void 0 ? void 0 : _a.attributes) === null || _b === void 0 ? void 0 : _b.src;
     const imageData = (_c = nodeData.meta) === null || _c === void 0 ? void 0 : _c.imageData;
     const alt = (_e = (_d = nodeData.meta) === null || _d === void 0 ? void 0 : _d.attributes) === null || _e === void 0 ? void 0 : _e.alt;
+    console.log('Creating image node:', {
+        id: nodeData.id,
+        src: imageSrc,
+        hasImageData: !!imageData,
+        imageDataType: typeof imageData,
+        imageDataLength: typeof imageData === 'string' ? imageData.length : 0,
+        imageDataPrefix: typeof imageData === 'string' ? imageData.substring(0, 50) : 'N/A',
+    });
     // Try to use actual image data if available
     if (imageData) {
         try {
