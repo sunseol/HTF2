@@ -1,4 +1,10 @@
-import { FigmaColor, FigmaEffect } from '../types/figma.types';
+﻿import { FigmaColor, FigmaEffect } from '../types/figma.types';
+import { shadowTokens } from '../config/design-tokens';
+
+export interface EffectConversionResult {
+  effects: FigmaEffect[];
+  token?: string;
+}
 
 const parseColor = (value?: string): FigmaColor | undefined => {
   if (!value) return undefined;
@@ -75,7 +81,52 @@ const parseSingleShadow = (shadow: string): FigmaEffect | undefined => {
   };
 };
 
-export const convertEffects = (styles: Record<string, string>): FigmaEffect[] | undefined => {
+const distanceScore = (a: Required<Pick<FigmaEffect, 'offset' | 'radius' | 'spread'>> & { color?: FigmaColor }, b: { offsetX: number; offsetY: number; blur: number; spread: number; color: string; opacity: number }) => {
+  const colorHex = a.color ? `#${[a.color.r, a.color.g, a.color.b].map((component) => Math.round(component * 255).toString(16).padStart(2, '0')).join('')}` : '#000000';
+  const hexLower = colorHex.toLowerCase();
+  const score =
+    Math.abs((a.offset?.x ?? 0) - b.offsetX) +
+    Math.abs((a.offset?.y ?? 0) - b.offsetY) +
+    Math.abs((a.radius ?? 0) - b.blur) * 0.25 +
+    Math.abs((a.spread ?? 0) - b.spread) * 0.25 +
+    (hexLower === b.color.toLowerCase() ? 0 : 20);
+  return score;
+};
+
+const matchShadowToken = (effects: FigmaEffect[]): string | undefined => {
+  if (effects.length === 0) return undefined;
+  let bestToken: string | undefined;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  shadowTokens.forEach((token) => {
+    if (token.layers.length !== effects.length) {
+      return;
+    }
+    let tokenScore = 0;
+    for (let index = 0; index < token.layers.length; index += 1) {
+      const layer = token.layers[index];
+      const effect = effects[index];
+      if (!effect.offset || effect.radius === undefined) {
+        tokenScore = Number.POSITIVE_INFINITY;
+        break;
+      }
+      tokenScore += distanceScore({
+        offset: effect.offset,
+        radius: effect.radius ?? 0,
+        spread: effect.spread ?? 0,
+        color: effect.color,
+      }, layer);
+    }
+    if (tokenScore < bestScore) {
+      bestScore = tokenScore;
+      bestToken = token.name;
+    }
+  });
+
+  return bestScore < 25 ? bestToken : undefined;
+};
+
+export const convertEffects = (styles: Record<string, string>): EffectConversionResult | undefined => {
   const effects: FigmaEffect[] = [];
   const boxShadow = styles['box-shadow'];
   const filter = styles.filter;
@@ -100,5 +151,12 @@ export const convertEffects = (styles: Record<string, string>): FigmaEffect[] | 
     }
   }
 
-  return effects.length > 0 ? effects : undefined;
+  if (effects.length === 0) {
+    return undefined;
+  }
+
+  return {
+    effects,
+    token: matchShadowToken(effects),
+  };
 };

@@ -1,7 +1,7 @@
 "use strict";
 // Figma Plugin Main Code
 // This runs in the Figma plugin sandbox
-figma.showUI(`﻿<!DOCTYPE html>
+figma.showUI(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -348,6 +348,31 @@ figma.showUI(`﻿<!DOCTYPE html>
   <button id="convert-btn">Convert to Figma</button>
   <button id="import-file-btn" class="button-secondary">Import HTML File</button>
 
+  <div class="section">
+    <div class="section-title">Exact Replica (No AI)</div>
+    <div class="input-group">
+      <label for="exact-url">URL</label>
+      <input type="text" id="exact-url" placeholder="https://example.com" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label for="exact-viewport">Viewport</label>
+      <select id="exact-viewport">
+        <option value="1920x1080">Desktop · 1920 × 1080</option>
+        <option value="1440x900">Desktop · 1440 × 900</option>
+        <option value="1280x720">Desktop · 1280 × 720</option>
+        <option value="375x667">Mobile · 375 × 667</option>
+      </select>
+    </div>
+    <div class="button-row">
+      <button id="convert-exact-url" class="primary">Render URL (Exact)</button>
+      <label class="upload-label">
+        <input type="file" id="h2d-file-input" accept=".h2d,.zip" hidden>
+        <span>Import .h2d</span>
+      </label>
+    </div>
+    <p class="helper-text">Generate a pixel-faithful Figma layout without AI by mirroring a production URL or importing a code.to.design archive.</p>
+  </div>
+
   <div class="loader" id="loader">
     <div class="spinner"></div>
   </div>
@@ -377,6 +402,10 @@ figma.showUI(`﻿<!DOCTYPE html>
     const htmlInput = document.getElementById('html-input');
     const apiUrl = document.getElementById('api-url');
     const convertBtn = document.getElementById('convert-btn');
+    const convertExactBtn = document.getElementById('convert-exact-url');
+    const exactUrlInput = document.getElementById('exact-url');
+    const exactViewportSelect = document.getElementById('exact-viewport');
+    const h2dFileInput = document.getElementById('h2d-file-input');
     const importFileBtn = document.getElementById('import-file-btn');
     const loader = document.getElementById('loader');
     const DEFAULT_API_URL = 'http://localhost:4000';
@@ -416,7 +445,8 @@ figma.showUI(`﻿<!DOCTYPE html>
       storageAvailable = false;
       console.warn('Local storage unavailable, falling back to in-memory API URL cache.', err);
     }
-\r\n    const statusDiv = document.getElementById('status');
+
+    const statusDiv = document.getElementById('status');
     const statsDiv = document.getElementById('stats');
 
     // Example templates
@@ -457,11 +487,23 @@ figma.showUI(`﻿<!DOCTYPE html>
     function showLoader() {
       loader.style.display = 'flex';
       convertBtn.disabled = true;
+      if (convertExactBtn instanceof HTMLButtonElement) {
+        convertExactBtn.disabled = true;
+      }
+      if (h2dFileInput instanceof HTMLInputElement) {
+        h2dFileInput.disabled = true;
+      }
     }
 
     function hideLoader() {
       loader.style.display = 'none';
       convertBtn.disabled = false;
+      if (convertExactBtn instanceof HTMLButtonElement) {
+        convertExactBtn.disabled = false;
+      }
+      if (h2dFileInput instanceof HTMLInputElement) {
+        h2dFileInput.disabled = false;
+      }
     }
 
     function updateStats(data) {
@@ -472,12 +514,13 @@ figma.showUI(`﻿<!DOCTYPE html>
         const time = Math.round(data.meta.render.processingTimeMs);
         document.getElementById('stat-time').textContent = time + 'ms';
       }
-      if (data.quality) {
-        const accuracy = Math.round(data.quality.accuracyScore * 100);
+      const quality = data.quality || (data.meta && data.meta.quality);
+      if (quality && typeof quality.accuracyScore === 'number') {
+        const accuracy = Math.round(quality.accuracyScore * 100);
         document.getElementById('stat-accuracy').textContent = accuracy + '%';
       }
       if (data.meta && data.meta.info) {
-        const aiSuggestions = data.meta.info.find(i => i.includes('AI-driven'));
+        const aiSuggestions = data.meta.info.find((info) => info.includes('AI-driven'));
         if (aiSuggestions) {
           const match = aiSuggestions.match(/(\d+)/);
           if (match) {
@@ -487,6 +530,15 @@ figma.showUI(`﻿<!DOCTYPE html>
       }
       statsDiv.style.display = 'block';
     }
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 1) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
 
     convertBtn.addEventListener('click', async () => {
       const htmlContent = htmlInput.value.trim();
@@ -510,7 +562,6 @@ figma.showUI(`﻿<!DOCTYPE html>
         skipVision
       };
 
-      // Send to plugin code
       parent.postMessage({
         pluginMessage: {
           type: 'convert',
@@ -521,30 +572,106 @@ figma.showUI(`﻿<!DOCTYPE html>
       }, '*');
     });
 
-    importFileBtn.addEventListener('click', () => {
-      parent.postMessage({
-        pluginMessage: {
-          type: 'import-file'
+    if (
+      convertExactBtn instanceof HTMLButtonElement &&
+      exactUrlInput instanceof HTMLInputElement &&
+      exactViewportSelect instanceof HTMLSelectElement &&
+      statsDiv instanceof HTMLElement &&
+      apiUrl instanceof HTMLInputElement
+    ) {
+      convertExactBtn.addEventListener('click', () => {
+        const url = exactUrlInput.value.trim();
+        if (!url) {
+          showStatus('Please enter a URL to mirror', 'error');
+          return;
         }
-      }, '*');
-    });
 
+        hideStatus();
+        showLoader();
+        statsDiv.style.display = 'none';
+
+        const [widthStr, heightStr] = exactViewportSelect.value.split('x');
+        const viewport = {
+          width: parseInt(widthStr, 10) || 1920,
+          height: parseInt(heightStr, 10) || 1080,
+        };
+
+        parent.postMessage({
+          pluginMessage: {
+            type: 'convert-exact-url',
+            apiUrl: apiUrl.value,
+            url,
+            viewport,
+            waitUntil: 'networkidle',
+          }
+        }, '*');
+      });
+    }
+
+    if (
+      h2dFileInput instanceof HTMLInputElement &&
+      statsDiv instanceof HTMLElement &&
+      apiUrl instanceof HTMLInputElement
+    ) {
+      h2dFileInput.addEventListener('change', async (event) => {
+        const target = event.target;
+        const file = target instanceof HTMLInputElement && target.files ? target.files[0] : null;
+        if (!file) {
+          return;
+        }
+
+        hideStatus();
+        showLoader();
+        statsDiv.style.display = 'none';
+
+        try {
+          const buffer = await file.arrayBuffer();
+          const base64 = arrayBufferToBase64(buffer);
+          parent.postMessage({
+            pluginMessage: {
+              type: 'convert-h2d',
+              apiUrl: apiUrl.value,
+              filename: file.name,
+              data: base64,
+            }
+          }, '*');
+        } catch (error) {
+          console.error('Failed to read H2D archive', error);
+          showStatus('Failed to read archive', 'error');
+          hideLoader();
+        } finally {
+          if (target instanceof HTMLInputElement) {
+            target.value = '';
+          }
+        }
+      });
+    }
+
+    if (importFileBtn instanceof HTMLButtonElement) {
+      importFileBtn.addEventListener('click', () => {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'import-file'
+          }
+        }, '*');
+      });
+    }
     // Listen for messages from plugin code
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
 
       if (msg.type === 'conversion-complete') {
         hideLoader();
-        showStatus(\`??Successfully created \${msg.data.nodes.length} Figma nodes!\`, 'success');
+        showStatus(\`Created \${msg.data.nodes.length} Figma nodes.\`, 'success');
         updateStats(msg.data);
       } else if (msg.type === 'conversion-error') {
         hideLoader();
-        showStatus(\`??Error: \${msg.error}\`, 'error');
+        showStatus(\`Error: \${msg.error}\`, 'error');
       } else if (msg.type === 'conversion-progress') {
-        showStatus(\`??\${msg.message}\`, 'info');
+        showStatus(msg.message, 'info');
       } else if (msg.type === 'file-selected') {
         htmlInput.value = msg.content;
-        showStatus('??File loaded successfully', 'success');
+        showStatus('File loaded successfully', 'success');
       }
     };
 
@@ -569,15 +696,21 @@ figma.showUI(`﻿<!DOCTYPE html>
 
 
 
+
+
+
+
+
+
 `, { width: 400, height: 700 });
 // Map to store created nodes by ID
 const nodeMap = new Map();
 const nodeDataMap = new Map();
+const imageHashCache = new Map();
 figma.ui.onmessage = async (msg) => {
     if (msg.type === 'convert') {
         try {
             figma.ui.postMessage({ type: 'conversion-progress', message: 'Sending request to backend...' });
-            // Call backend API
             const response = await fetch(`${msg.apiUrl}/render-html-text`, {
                 method: 'POST',
                 headers: {
@@ -593,21 +726,77 @@ figma.ui.onmessage = async (msg) => {
             }
             const data = await response.json();
             figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
-            // Create Figma nodes from the response
             await createFigmaNodes(data.nodes);
-            figma.ui.postMessage({
-                type: 'conversion-complete',
-                data: data,
-            });
-            figma.notify(`??Successfully created ${data.nodes.length} Figma nodes!`);
+            figma.ui.postMessage({ type: 'conversion-complete', data });
+            figma.notify(`Created ${data.nodes.length} Figma nodes.`);
         }
         catch (error) {
             console.error('Conversion error:', error);
-            figma.ui.postMessage({
-                type: 'conversion-error',
-                error: error.message || 'Unknown error occurred',
+            const message = (error === null || error === void 0 ? void 0 : error.message) || 'Unknown error occurred';
+            figma.ui.postMessage({ type: 'conversion-error', error: message });
+            figma.notify(`Error: ${message}`, { error: true });
+        }
+    }
+    else if (msg.type === 'convert-exact-url') {
+        try {
+            if (!msg.url) {
+                throw new Error('URL is required for exact conversion');
+            }
+            figma.ui.postMessage({ type: 'conversion-progress', message: 'Rendering URL via exact pipeline...' });
+            const response = await fetch(`${msg.apiUrl}/render-url`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: msg.url,
+                    viewport: msg.viewport,
+                    waitUntil: msg.waitUntil,
+                }),
             });
-            figma.notify(`??Error: ${error.message}`, { error: true });
+            if (!response.ok) {
+                throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
+            await createFigmaNodes(data.nodes);
+            figma.ui.postMessage({ type: 'conversion-complete', data });
+            figma.notify(`Created ${data.nodes.length} nodes from exact replica.`);
+        }
+        catch (error) {
+            console.error('Exact conversion error:', error);
+            const message = (error === null || error === void 0 ? void 0 : error.message) || 'Unknown error occurred';
+            figma.ui.postMessage({ type: 'conversion-error', error: message });
+            figma.notify(`Error: ${message}`, { error: true });
+        }
+    }
+    else if (msg.type === 'convert-h2d') {
+        try {
+            if (!msg.data) {
+                throw new Error('H2D payload missing');
+            }
+            figma.ui.postMessage({ type: 'conversion-progress', message: 'Importing H2D archive...' });
+            const response = await fetch(`${msg.apiUrl}/import-h2d`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: msg.data, filename: msg.filename }),
+            });
+            if (!response.ok) {
+                throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
+            await createFigmaNodes(data.nodes);
+            figma.ui.postMessage({ type: 'conversion-complete', data });
+            figma.notify(`Imported ${data.nodes.length} nodes from H2D archive.`);
+        }
+        catch (error) {
+            console.error('H2D import error:', error);
+            const message = (error === null || error === void 0 ? void 0 : error.message) || 'Unknown error occurred';
+            figma.ui.postMessage({ type: 'conversion-error', error: message });
+            figma.notify(`Error: ${message}`, { error: true });
         }
     }
     else if (msg.type === 'import-file') {
@@ -650,10 +839,14 @@ function topologicalSort(nodes) {
     return sorted;
 }
 async function createNode(nodeData) {
+    var _a, _b;
     let node = null;
     try {
         if (nodeData.type === 'TEXT') {
             node = await createTextNode(nodeData);
+        }
+        else if (nodeData.type === 'IMAGE') {
+            node = await createImageNode(nodeData);
         }
         else if (nodeData.type === 'FRAME') {
             node = createFrameNode(nodeData);
@@ -662,6 +855,12 @@ async function createNode(nodeData) {
             return null;
         // Set common properties
         node.name = nodeData.name || nodeData.type.toLowerCase();
+        if (typeof nodeData.visible === 'boolean') {
+            node.visible = nodeData.visible;
+        }
+        if (((_b = (_a = nodeData.meta) === null || _a === void 0 ? void 0 : _a.attributes) === null || _b === void 0 ? void 0 : _b.role) === 'screenshot' && 'locked' in node) {
+            node.locked = true;
+        }
         // Store in map
         nodeMap.set(nodeData.id, node);
         const parentNode = nodeData.parentId ? nodeMap.get(nodeData.parentId) : undefined;
@@ -672,6 +871,7 @@ async function createNode(nodeData) {
         else {
             figma.currentPage.appendChild(node);
         }
+        applyLayoutParticipation(node, nodeData, parentData);
         applyPosition(node, nodeData, parentData);
         return node;
     }
@@ -682,14 +882,46 @@ async function createNode(nodeData) {
 }
 function applyPosition(node, nodeData, parentData) {
     const parentLayoutMode = (parentData === null || parentData === void 0 ? void 0 : parentData.layoutMode) && parentData.layoutMode !== 'NONE';
-    if (parentLayoutMode) {
-        return;
+    const isAbsolute = nodeData.layoutPositioning === 'ABSOLUTE';
+    const layoutNode = node;
+    // For absolute positioned elements, always set position
+    if (isAbsolute && 'layoutPositioning' in layoutNode) {
+        layoutNode.layoutPositioning = 'ABSOLUTE';
     }
+    // Calculate position relative to parent
     const offsetX = parentData ? parentData.boundingBox.x : 0;
     const offsetY = parentData ? parentData.boundingBox.y : 0;
-    const layoutNode = node;
+    // If parent has auto layout but child is not absolute, skip position setting
+    // Figma auto layout will handle positioning
+    if (parentLayoutMode && !isAbsolute) {
+        return;
+    }
+    // Set position for:
+    // 1. Nodes without auto layout parents
+    // 2. Absolutely positioned nodes
     layoutNode.x = nodeData.boundingBox.x - offsetX;
     layoutNode.y = nodeData.boundingBox.y - offsetY;
+}
+function applyLayoutParticipation(node, nodeData, parentData) {
+    const layoutNode = node;
+    if ('layoutPositioning' in layoutNode) {
+        layoutNode.layoutPositioning = nodeData.layoutPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO';
+    }
+    if (!parentData || parentData.layoutMode === 'NONE') {
+        return;
+    }
+    if (nodeData.layoutAlign) {
+        layoutNode.layoutAlign = nodeData.layoutAlign;
+    }
+    if (nodeData.layoutGrow !== undefined) {
+        layoutNode.layoutGrow = nodeData.layoutGrow;
+    }
+    if (nodeData.layoutShrink !== undefined && 'layoutShrink' in layoutNode) {
+        layoutNode.layoutShrink = nodeData.layoutShrink;
+    }
+    if (nodeData.layoutBasis !== undefined && 'layoutBasis' in layoutNode) {
+        layoutNode.layoutBasis = nodeData.layoutBasis;
+    }
 }
 function createFrameNode(nodeData) {
     const frame = figma.createFrame();
@@ -737,6 +969,27 @@ function createFrameNode(nodeData) {
             frame.paddingBottom = nodeData.padding.bottom;
             frame.paddingLeft = nodeData.padding.left;
         }
+        if (nodeData.primaryAxisAlignItems) {
+            frame.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
+        }
+        if (nodeData.counterAxisAlignItems) {
+            // Figma API doesn't support STRETCH for counterAxisAlignItems
+            // Map STRETCH to MAX as a reasonable fallback
+            const alignValue = nodeData.counterAxisAlignItems === 'STRETCH' ? 'MAX' : nodeData.counterAxisAlignItems;
+            frame.counterAxisAlignItems = alignValue;
+        }
+        if (nodeData.primaryAxisSizingMode) {
+            frame.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+        }
+        if (nodeData.counterAxisSizingMode) {
+            frame.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+        }
+        if (nodeData.layoutWrap) {
+            frame.layoutWrap = nodeData.layoutWrap;
+        }
+        if (nodeData.primaryAxisAlignContent && 'primaryAxisAlignContent' in frame) {
+            frame.primaryAxisAlignContent = nodeData.primaryAxisAlignContent;
+        }
     }
     // Overflow
     if (nodeData.overflowDirection) {
@@ -746,36 +999,183 @@ function createFrameNode(nodeData) {
     if (nodeData.clipsContent !== undefined) {
         frame.clipsContent = nodeData.clipsContent;
     }
+    if (nodeData.layoutPositioning === 'ABSOLUTE' && 'layoutPositioning' in frame) {
+        frame.layoutPositioning = 'ABSOLUTE';
+    }
     return frame;
 }
+async function createImageNode(nodeData) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+    const rect = figma.createRectangle();
+    // Size
+    rect.resize(Math.max(nodeData.boundingBox.width, 1), Math.max(nodeData.boundingBox.height, 1));
+    const imageSrc = (_b = (_a = nodeData.meta) === null || _a === void 0 ? void 0 : _a.attributes) === null || _b === void 0 ? void 0 : _b.src;
+    const imageData = (_c = nodeData.meta) === null || _c === void 0 ? void 0 : _c.imageData;
+    const alt = (_e = (_d = nodeData.meta) === null || _d === void 0 ? void 0 : _d.attributes) === null || _e === void 0 ? void 0 : _e.alt;
+    // Try to use actual image data if available
+    if (imageData) {
+        try {
+            // Check if it's an SVG data URL
+            const isSvg = imageData.startsWith('data:image/svg+xml');
+            if (isSvg) {
+                // For SVG, try to convert it to PNG first
+                // Figma doesn't support SVG fills directly, so we need to rasterize
+                try {
+                    const bytes = decodeBase64ToUint8Array(imageData);
+                    const image = figma.createImage(bytes);
+                    rect.fills = [{
+                            type: 'IMAGE',
+                            imageHash: image.hash,
+                            scaleMode: 'FIT',
+                        }];
+                    rect.name = alt || 'SVG Image';
+                }
+                catch (svgError) {
+                    // SVG conversion failed, use placeholder
+                    console.warn('Could not convert SVG to image:', svgError);
+                    rect.fills = [{
+                            type: 'SOLID',
+                            color: { r: 0.95, g: 0.95, b: 0.95 },
+                        }];
+                    rect.name = alt || 'SVG (conversion failed)';
+                }
+            }
+            else {
+                // Regular image (PNG/JPG)
+                const bytes = decodeBase64ToUint8Array(imageData);
+                const image = figma.createImage(bytes);
+                // Use image as fill
+                rect.fills = [{
+                        type: 'IMAGE',
+                        imageHash: image.hash,
+                        scaleMode: 'FIT',
+                    }];
+                // Set name
+                if (alt) {
+                    rect.name = alt;
+                }
+                else if (imageSrc) {
+                    const srcName = imageSrc.substring(imageSrc.lastIndexOf('/') + 1);
+                    rect.name = srcName.length > 30 ? srcName.substring(0, 30) : srcName;
+                }
+                else {
+                    rect.name = 'Image';
+                }
+            }
+        }
+        catch (error) {
+            console.error('Failed to create image from data:', error);
+            // Fallback to placeholder
+            rect.fills = [{
+                    type: 'SOLID',
+                    color: { r: 0.9, g: 0.9, b: 0.9 },
+                }];
+            rect.name = alt || 'Image (load failed)';
+            // Add warning text overlay
+            rect.strokes = [{
+                    type: 'SOLID',
+                    color: { r: 0.9, g: 0.5, b: 0.1 },
+                }];
+            rect.strokeWeight = 2;
+        }
+    }
+    else if (imageSrc) {
+        // No image data available - create placeholder
+        rect.fills = [{
+                type: 'SOLID',
+                color: { r: 0.9, g: 0.9, b: 0.9 },
+            }];
+        if (alt) {
+            rect.name = `Image: ${alt}`;
+        }
+        else {
+            rect.name = `Image: ${imageSrc.substring(imageSrc.lastIndexOf('/') + 1, imageSrc.lastIndexOf('/') + 30)}`;
+        }
+        // Add border to indicate it's a placeholder
+        rect.strokes = [{
+                type: 'SOLID',
+                color: { r: 0.7, g: 0.7, b: 0.7 },
+            }];
+        rect.strokeWeight = 1;
+    }
+    else {
+        // Fallback placeholder
+        rect.fills = [{
+                type: 'SOLID',
+                color: { r: 0.85, g: 0.85, b: 0.85 },
+            }];
+        rect.name = 'Image (no src)';
+        rect.strokes = [{
+                type: 'SOLID',
+                color: { r: 0.7, g: 0.7, b: 0.7 },
+            }];
+        rect.strokeWeight = 1;
+    }
+    // Check if it's a logo or icon from meta
+    const isLogo = ((_g = (_f = nodeData.meta) === null || _f === void 0 ? void 0 : _f.imageData) === null || _g === void 0 ? void 0 : _g.isLogo) || ((_j = (_h = nodeData.meta) === null || _h === void 0 ? void 0 : _h.classes) === null || _j === void 0 ? void 0 : _j.some((c) => /logo/i.test(c)));
+    const isIcon = ((_l = (_k = nodeData.meta) === null || _k === void 0 ? void 0 : _k.imageData) === null || _l === void 0 ? void 0 : _l.isIcon) || ((_o = (_m = nodeData.meta) === null || _m === void 0 ? void 0 : _m.classes) === null || _o === void 0 ? void 0 : _o.some((c) => /icon/i.test(c)));
+    if (isIcon) {
+        rect.cornerRadius = nodeData.boundingBox.width / 4;
+    }
+    else if (isLogo) {
+        rect.cornerRadius = 4;
+    }
+    return rect;
+}
 async function createTextNode(nodeData) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
     const text = figma.createText();
     // Load font before mutating text properties
     const fontFamily = ((_a = nodeData.text) === null || _a === void 0 ? void 0 : _a.fontFamily) || 'Inter';
     const fontWeight = normalizeFontWeight((_b = nodeData.text) === null || _b === void 0 ? void 0 : _b.fontWeight);
-    let fontName = { family: fontFamily, style: fontWeight };
+    const fontStyle = resolveFontStyle(fontWeight, (_c = nodeData.text) === null || _c === void 0 ? void 0 : _c.fontStyle);
+    let fontName = { family: fontFamily, style: fontStyle };
     try {
         await figma.loadFontAsync(fontName);
     }
     catch (error) {
-        // Fallback to Inter Regular if requested font is unavailable
-        fontName = { family: 'Inter', style: 'Regular' };
-        await figma.loadFontAsync(fontName);
+        // Fallback to Inter with similar weight/style if requested font is unavailable
+        const fallbackWeight = normalizeFontWeight((_d = nodeData.text) === null || _d === void 0 ? void 0 : _d.fontWeight);
+        const fallbackStyle = resolveFontStyle(fallbackWeight, (_e = nodeData.text) === null || _e === void 0 ? void 0 : _e.fontStyle);
+        fontName = { family: 'Inter', style: fallbackStyle };
+        try {
+            await figma.loadFontAsync(fontName);
+        }
+        catch (_q) {
+            fontName = { family: 'Inter', style: 'Regular' };
+            await figma.loadFontAsync(fontName);
+        }
     }
     text.fontName = fontName;
     // Text content
-    text.characters = ((_c = nodeData.text) === null || _c === void 0 ? void 0 : _c.characters) || '';
-    // Size
-    if (nodeData.boundingBox.width > 0) {
-        text.resize(nodeData.boundingBox.width, nodeData.boundingBox.height || 100);
-    }
-    // Font size
-    if ((_d = nodeData.text) === null || _d === void 0 ? void 0 : _d.fontSize) {
+    text.characters = ((_f = nodeData.text) === null || _f === void 0 ? void 0 : _f.characters) || '';
+    // Font size (set before resizing)
+    if ((_g = nodeData.text) === null || _g === void 0 ? void 0 : _g.fontSize) {
         text.fontSize = nodeData.text.fontSize;
     }
+    // Size - use auto-resize to prevent truncation
+    if (nodeData.boundingBox.width > 0) {
+        // Set text auto-resize to WIDTH_AND_HEIGHT first to get full dimensions
+        text.textAutoResize = 'WIDTH_AND_HEIGHT';
+        // Get the natural size of the text
+        const naturalWidth = text.width;
+        const naturalHeight = text.height;
+        // If the bounding box width is larger than natural width, use fixed width
+        if (nodeData.boundingBox.width >= naturalWidth) {
+            text.textAutoResize = 'HEIGHT';
+            text.resize(nodeData.boundingBox.width, text.height);
+        }
+        // Otherwise, let it auto-resize to show full text
+        else {
+            text.textAutoResize = 'WIDTH_AND_HEIGHT';
+        }
+    }
+    else {
+        // If no width specified, use auto-resize
+        text.textAutoResize = 'WIDTH_AND_HEIGHT';
+    }
     // Line height
-    if ((_e = nodeData.text) === null || _e === void 0 ? void 0 : _e.lineHeight) {
+    if ((_h = nodeData.text) === null || _h === void 0 ? void 0 : _h.lineHeight) {
         if (nodeData.text.lineHeight < 10) {
             // Relative line height (e.g., 1.6)
             text.lineHeight = { value: nodeData.text.lineHeight * 100, unit: 'PERCENT' };
@@ -786,18 +1186,24 @@ async function createTextNode(nodeData) {
         }
     }
     // Letter spacing
-    if ((_f = nodeData.text) === null || _f === void 0 ? void 0 : _f.letterSpacing) {
+    if ((_j = nodeData.text) === null || _j === void 0 ? void 0 : _j.letterSpacing) {
         text.letterSpacing = { value: nodeData.text.letterSpacing, unit: 'PIXELS' };
     }
     // Text alignment
-    if ((_g = nodeData.text) === null || _g === void 0 ? void 0 : _g.textAlignHorizontal) {
+    if ((_k = nodeData.text) === null || _k === void 0 ? void 0 : _k.textAlignHorizontal) {
         text.textAlignHorizontal = nodeData.text.textAlignHorizontal;
     }
-    if ((_h = nodeData.text) === null || _h === void 0 ? void 0 : _h.textAlignVertical) {
+    if ((_l = nodeData.text) === null || _l === void 0 ? void 0 : _l.textAlignVertical) {
         text.textAlignVertical = nodeData.text.textAlignVertical;
     }
+    if ((_m = nodeData.text) === null || _m === void 0 ? void 0 : _m.textCase) {
+        text.textCase = nodeData.text.textCase;
+    }
+    if ((_o = nodeData.text) === null || _o === void 0 ? void 0 : _o.textDecoration) {
+        text.textDecoration = nodeData.text.textDecoration;
+    }
     // Text fills
-    if (((_j = nodeData.text) === null || _j === void 0 ? void 0 : _j.fills) && nodeData.text.fills.length > 0) {
+    if (((_p = nodeData.text) === null || _p === void 0 ? void 0 : _p.fills) && nodeData.text.fills.length > 0) {
         text.fills = convertFills(nodeData.text.fills);
     }
     return text;
@@ -820,8 +1226,63 @@ function normalizeFontWeight(weight) {
     };
     return weightMap[weight.toString()] || 'Regular';
 }
+function resolveFontStyle(weightStyle, fontStyle) {
+    if (!fontStyle || fontStyle === 'normal') {
+        return weightStyle;
+    }
+    const lowered = fontStyle.toLowerCase();
+    if (lowered === 'italic' || lowered === 'oblique') {
+        if (weightStyle.toLowerCase().includes('italic')) {
+            return weightStyle;
+        }
+        if (weightStyle === 'Regular') {
+            return 'Italic';
+        }
+        return `${weightStyle} Italic`;
+    }
+    return weightStyle;
+}
+function decodeBase64ToUint8Array(base64) {
+    const normalized = base64.includes(',') ? base64.split(',').pop() : base64;
+    const globalAtob = typeof globalThis !== 'undefined' && typeof globalThis.atob === 'function'
+        ? globalThis.atob
+        : undefined;
+    if (globalAtob) {
+        const binary = globalAtob(normalized);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    }
+    const cleaned = normalized.replace(/[^A-Za-z0-9+/=]/g, '');
+    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    const output = [];
+    let index = 0;
+    while (index < cleaned.length) {
+        const enc1 = base64Chars.indexOf(cleaned.charAt(index++));
+        const enc2 = base64Chars.indexOf(cleaned.charAt(index++));
+        const enc3 = base64Chars.indexOf(cleaned.charAt(index++));
+        const enc4 = base64Chars.indexOf(cleaned.charAt(index++));
+        if (enc1 < 0 || enc2 < 0) {
+            break;
+        }
+        const chr1 = (enc1 << 2) | (enc2 >> 4);
+        output.push(chr1 & 0xff);
+        if (enc3 >= 0 && enc3 < 64) {
+            const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            output.push(chr2 & 0xff);
+            if (enc4 >= 0 && enc4 < 64) {
+                const chr3 = ((enc3 & 3) << 6) | enc4;
+                output.push(chr3 & 0xff);
+            }
+        }
+    }
+    return new Uint8Array(output);
+}
 function convertFills(fills) {
     return fills.map((fill) => {
+        var _a, _b;
         if (fill.type === 'SOLID') {
             return {
                 type: 'SOLID',
@@ -846,6 +1307,31 @@ function convertFills(fills) {
                     },
                 })),
                 gradientTransform: calculateGradientTransform(fill.gradientHandlePositions || []),
+            };
+        }
+        else if (fill.type === 'IMAGE') {
+            const cacheKey = (_a = fill.imageRef) !== null && _a !== void 0 ? _a : fill.imageData;
+            let imageHash = cacheKey ? imageHashCache.get(cacheKey) : undefined;
+            if (!imageHash) {
+                if (!fill.imageData) {
+                    console.warn('Image fill missing imageData; skipping image fill');
+                    return {
+                        type: 'SOLID',
+                        color: { r: 0, g: 0, b: 0 },
+                        opacity: 0,
+                    };
+                }
+                const bytes = decodeBase64ToUint8Array(fill.imageData);
+                const image = figma.createImage(bytes);
+                imageHash = image.hash;
+                if (cacheKey) {
+                    imageHashCache.set(cacheKey, imageHash);
+                }
+            }
+            return {
+                type: 'IMAGE',
+                imageHash,
+                scaleMode: (_b = fill.scaleMode) !== null && _b !== void 0 ? _b : 'FILL',
             };
         }
         // Default fallback

@@ -1,4 +1,4 @@
-export type FigmaPaintType = 'SOLID' | 'GRADIENT_LINEAR' | 'GRADIENT_RADIAL' | 'IMAGE';
+export type FigmaPaintType = "SOLID" | "GRADIENT_LINEAR" | "GRADIENT_RADIAL" | "IMAGE";
 
 export interface FigmaColor {
   r: number;
@@ -14,10 +14,12 @@ export interface FigmaPaint {
   gradientStops?: Array<{ position: number; color: FigmaColor }>;
   gradientHandlePositions?: Array<{ x: number; y: number }>;
   imageRef?: string;
-  scaleMode?: 'FILL' | 'FIT' | 'CROP' | 'TILE';
+  imageData?: string;
+  imageUrl?: string;
+  scaleMode?: "FILL" | "FIT" | "CROP" | "TILE";
 }
 
-export type FigmaEffectType = 'DROP_SHADOW' | 'INNER_SHADOW' | 'LAYER_BLUR' | 'BACKGROUND_BLUR';
+export type FigmaEffectType = "DROP_SHADOW" | "INNER_SHADOW" | "LAYER_BLUR" | "BACKGROUND_BLUR";
 
 export interface FigmaEffect {
   type: FigmaEffectType;
@@ -28,40 +30,58 @@ export interface FigmaEffect {
   visible?: boolean;
 }
 
-export type LayoutMode = 'NONE' | 'HORIZONTAL' | 'VERTICAL';
+export type LayoutMode = "NONE" | "HORIZONTAL" | "VERTICAL";
 
 export interface FigmaNodeData {
   id: string;
   parentId?: string;
-  type: 'FRAME' | 'TEXT' | 'VECTOR' | 'IMAGE';
+  type: "FRAME" | "TEXT" | "VECTOR" | "IMAGE";
   name?: string;
+  visible?: boolean;
   boundingBox: { x: number; y: number; width: number; height: number };
   fills?: FigmaPaint[];
   strokes?: FigmaPaint[];
   strokeWeight?: number;
-  strokeAlign?: 'INSIDE' | 'OUTSIDE' | 'CENTER';
+  strokeAlign?: "INSIDE" | "OUTSIDE" | "CENTER";
   cornerRadius?: number | { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number };
   effects?: FigmaEffect[];
   layoutMode?: LayoutMode;
   itemSpacing?: number;
   padding?: { top: number; right: number; bottom: number; left: number };
-  layoutGrids?: Array<{ pattern: 'COLUMNS' | 'ROWS'; sectionSize: number; gutterSize: number }>;
-  overflowDirection?: 'HORIZONTAL' | 'VERTICAL' | 'BOTH' | 'NONE';
+  primaryAxisAlignItems?: "MIN" | "CENTER" | "MAX" | "SPACE_BETWEEN";
+  counterAxisAlignItems?: "MIN" | "CENTER" | "MAX" | "BASELINE" | "STRETCH";
+  primaryAxisSizingMode?: "AUTO" | "FIXED";
+  counterAxisSizingMode?: "AUTO" | "FIXED";
+  primaryAxisAlignContent?: "MIN" | "CENTER" | "MAX" | "SPACE_BETWEEN";
+  layoutWrap?: "NO_WRAP" | "WRAP";
+  layoutAlign?: "MIN" | "CENTER" | "MAX" | "STRETCH";
+  layoutGrow?: number;
+  layoutShrink?: number;
+  layoutBasis?: number;
+  layoutPositioning?: "AUTO" | "ABSOLUTE";
+  layoutGrids?: Array<{ pattern: "COLUMNS" | "ROWS"; sectionSize: number; gutterSize: number }>;
+  overflowDirection?: "HORIZONTAL" | "VERTICAL" | "BOTH" | "NONE";
   clipsContent?: boolean;
   text?: {
     characters: string;
     fontFamily?: string;
     fontSize?: number;
+    fontSizeRem?: number;
     fontWeight?: number | string;
+    fontStyle?: string;
     lineHeight?: number;
+    lineHeightRem?: number;
     letterSpacing?: number;
-    textAlignHorizontal?: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
-    textAlignVertical?: 'TOP' | 'CENTER' | 'BOTTOM';
+    textAlignHorizontal?: "LEFT" | "CENTER" | "RIGHT" | "JUSTIFIED";
+    textAlignVertical?: "TOP" | "CENTER" | "BOTTOM";
+    textCase?: "ORIGINAL" | "UPPER" | "LOWER" | "TITLE";
+    textDecoration?: "NONE" | "UNDERLINE" | "STRIKETHROUGH";
     fills?: FigmaPaint[];
+    token?: string;
   };
   constraints?: {
-    horizontal: 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'SCALE';
-    vertical: 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'SCALE';
+    horizontal: "MIN" | "CENTER" | "MAX" | "STRETCH" | "SCALE";
+    vertical: "MIN" | "CENTER" | "MAX" | "STRETCH" | "SCALE";
   };
   meta?: {
     htmlTag?: string;
@@ -75,6 +95,19 @@ export interface FigmaNodeData {
       summary?: string;
       source?: string;
     }>;
+    tokens?: {
+      spacing?: {
+        gapToken?: string;
+        paddingTokens?: { top?: string; right?: string; bottom?: string; left?: string };
+        gapRem?: number;
+        paddingRem?: { top?: number; right?: number; bottom?: number; left?: number };
+      };
+      typography?: { token?: string; fontSizeRem?: number; lineHeightRem?: number };
+      shadows?: { token?: string };
+      colors?: { fillToken?: string; strokeToken?: string; textToken?: string };
+      actions?: { role?: string; recommendedRatio?: number; iconSize?: number };
+    };
   };
 }
+
 

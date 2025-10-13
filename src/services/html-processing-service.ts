@@ -1,8 +1,8 @@
-import { renderHtmlFromString } from '../renderers/html-renderer';
+﻿import { renderHtmlFromString } from '../renderers/html-renderer';
 import { captureHtmlWithPlaywright } from '../renderers/playwright-capture';
 import { convertHtmlToFigma, convertSnapshotToFigma } from '../converters/css-to-figma-mapper';
 import { generateFigmaTree } from '../generators/figma-node-generator';
-import { generateStyleSystem } from '../generators/style-system-generator';
+import { generateStyleSystem, staticDesignTokens } from '../generators/style-system-generator';
 import { detectComponentPatterns } from '../generators/component-generator';
 import { withTimeout, TimeoutError } from '../utils/async-utils';
 import { logger } from '../utils/logger';
@@ -273,6 +273,8 @@ export class HtmlProcessingService {
     };
   }
 }
+
+
 
 
 

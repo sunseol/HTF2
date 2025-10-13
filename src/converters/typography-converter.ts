@@ -1,4 +1,5 @@
-import { FigmaPaint } from '../types/figma.types';
+﻿import { FigmaPaint } from '../types/figma.types';
+import { findTypographyToken, toRem } from '../config/design-tokens';
 
 const parseFontSize = (value?: string): number | undefined => {
   if (!value) return undefined;
@@ -57,24 +58,56 @@ export interface TypographyConversionResult {
   characters: string;
   fontFamily?: string;
   fontSize?: number;
+  fontSizeRem?: number;
   fontWeight?: number | string;
+  fontStyle?: string;
   lineHeight?: number;
+  lineHeightRem?: number;
   letterSpacing?: number;
   textAlignHorizontal?: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
+  textCase?: 'UPPER' | 'LOWER' | 'TITLE';
+  textDecoration?: 'UNDERLINE' | 'STRIKETHROUGH';
   fills?: FigmaPaint[];
+  token?: string;
 }
 
 export const convertTypography = (
   textContent: string,
   styles: Record<string, string>,
 ): TypographyConversionResult => {
-  const fontFamily = styles['font-family'];
+  const fontFamilyRaw = styles['font-family'];
+  const fontFamily = fontFamilyRaw?.split(',')[0]?.replace(/['\"]/g, '').trim();
   const fontSize = parseFontSize(styles['font-size']);
   const fontWeight = styles['font-weight'];
+  const fontStyle = styles['font-style']?.toLowerCase();
   const lineHeight = parseLineHeight(styles['line-height'], fontSize);
   const letterSpacing = parseLetterSpacing(styles['letter-spacing'], fontSize);
   const textAlign = styles['text-align'];
   const colorPaint = parseColorToPaint(styles.color);
+  const textTransform = styles['text-transform']?.toLowerCase();
+  const textDecorationRaw = styles['text-decoration']?.toLowerCase();
+
+  let textCase: TypographyConversionResult['textCase'];
+  switch (textTransform) {
+    case 'uppercase':
+      textCase = 'UPPER';
+      break;
+    case 'lowercase':
+      textCase = 'LOWER';
+      break;
+    case 'capitalize':
+      textCase = 'TITLE';
+      break;
+    default:
+      textCase = undefined;
+  }
+
+  let textDecoration: TypographyConversionResult['textDecoration'];
+  if (textDecorationRaw?.includes('underline')) {
+    textDecoration = 'UNDERLINE';
+  } else if (textDecorationRaw?.includes('line-through')) {
+    textDecoration = 'STRIKETHROUGH';
+  }
 
   const textAlignHorizontal: TypographyConversionResult['textAlignHorizontal'] =
     textAlign === 'center' ? 'CENTER'
@@ -82,14 +115,22 @@ export const convertTypography = (
       : textAlign === 'justify' ? 'JUSTIFIED'
       : 'LEFT';
 
+  const typographyToken = findTypographyToken(fontFamily, fontSize, fontWeight, lineHeight, letterSpacing);
+
   return {
     characters: textContent,
-    fontFamily: fontFamily?.split(',')[0]?.replace(/['"]/g, '').trim(),
+    fontFamily,
     fontSize,
+    fontSizeRem: toRem(fontSize),
     fontWeight,
+    fontStyle,
     lineHeight,
+    lineHeightRem: toRem(lineHeight),
     letterSpacing,
     textAlignHorizontal,
+    textCase,
+    textDecoration,
     fills: colorPaint ? [colorPaint] : undefined,
+    token: typographyToken?.name,
   };
 };

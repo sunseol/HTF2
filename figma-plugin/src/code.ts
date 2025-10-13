@@ -1,4 +1,4 @@
-﻿// Figma Plugin Main Code
+// Figma Plugin Main Code
 // This runs in the Figma plugin sandbox
 
 figma.showUI(__html__, { width: 400, height: 700 });
@@ -8,6 +8,7 @@ interface FigmaNodeData {
   parentId?: string;
   type: 'FRAME' | 'TEXT' | 'VECTOR' | 'IMAGE';
   name?: string;
+  visible?: boolean;
   boundingBox: { x: number; y: number; width: number; height: number };
   fills?: any[];
   strokes?: any[];
@@ -18,6 +19,17 @@ interface FigmaNodeData {
   layoutMode?: 'NONE' | 'HORIZONTAL' | 'VERTICAL';
   itemSpacing?: number;
   padding?: { top: number; right: number; bottom: number; left: number };
+  primaryAxisAlignItems?: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN';
+  counterAxisAlignItems?: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE' | 'STRETCH';
+  primaryAxisSizingMode?: 'AUTO' | 'FIXED';
+  counterAxisSizingMode?: 'AUTO' | 'FIXED';
+  primaryAxisAlignContent?: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN';
+  layoutWrap?: 'NO_WRAP' | 'WRAP';
+  layoutAlign?: 'MIN' | 'CENTER' | 'MAX' | 'STRETCH';
+  layoutGrow?: number;
+  layoutShrink?: number;
+  layoutBasis?: number;
+  layoutPositioning?: 'AUTO' | 'ABSOLUTE';
   overflowDirection?: 'HORIZONTAL' | 'VERTICAL' | 'BOTH' | 'NONE';
   clipsContent?: boolean;
   text?: {
@@ -25,10 +37,13 @@ interface FigmaNodeData {
     fontFamily?: string;
     fontSize?: number;
     fontWeight?: number | string;
+    fontStyle?: string;
     lineHeight?: number;
     letterSpacing?: number;
     textAlignHorizontal?: 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
     textAlignVertical?: 'TOP' | 'CENTER' | 'BOTTOM';
+    textCase?: 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE';
+    textDecoration?: 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH';
     fills?: any[];
   };
   constraints?: {
@@ -48,13 +63,14 @@ interface ConversionResponse {
 // Map to store created nodes by ID
 const nodeMap = new Map<string, SceneNode>();
 const nodeDataMap = new Map<string, FigmaNodeData>();
+const imageHashCache = new Map<string, string>();
+
+declare const atob: (data: string) => string;
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'convert') {
     try {
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Sending request to backend...' });
-
-      // Call backend API
       const response = await fetch(`${msg.apiUrl}/render-html-text`, {
         method: 'POST',
         headers: {
@@ -71,25 +87,77 @@ figma.ui.onmessage = async (msg) => {
       }
 
       const data: ConversionResponse = await response.json();
-
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
-
-      // Create Figma nodes from the response
       await createFigmaNodes(data.nodes);
-
-      figma.ui.postMessage({
-        type: 'conversion-complete',
-        data: data,
-      });
-
-      figma.notify(`??Successfully created ${data.nodes.length} Figma nodes!`);
+      figma.ui.postMessage({ type: 'conversion-complete', data });
+      figma.notify(`Created ${data.nodes.length} Figma nodes.`);
     } catch (error: any) {
       console.error('Conversion error:', error);
-      figma.ui.postMessage({
-        type: 'conversion-error',
-        error: error.message || 'Unknown error occurred',
+      const message = error?.message || 'Unknown error occurred';
+      figma.ui.postMessage({ type: 'conversion-error', error: message });
+      figma.notify(`Error: ${message}`, { error: true });
+    }
+  } else if (msg.type === 'convert-exact-url') {
+    try {
+      if (!msg.url) {
+        throw new Error('URL is required for exact conversion');
+      }
+      figma.ui.postMessage({ type: 'conversion-progress', message: 'Rendering URL via exact pipeline...' });
+      const response = await fetch(`${msg.apiUrl}/render-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: msg.url,
+          viewport: msg.viewport,
+          waitUntil: msg.waitUntil,
+        }),
       });
-      figma.notify(`??Error: ${error.message}`, { error: true });
+
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ConversionResponse = await response.json();
+      figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
+      await createFigmaNodes(data.nodes);
+      figma.ui.postMessage({ type: 'conversion-complete', data });
+      figma.notify(`Created ${data.nodes.length} nodes from exact replica.`);
+    } catch (error: any) {
+      console.error('Exact conversion error:', error);
+      const message = error?.message || 'Unknown error occurred';
+      figma.ui.postMessage({ type: 'conversion-error', error: message });
+      figma.notify(`Error: ${message}`, { error: true });
+    }
+  } else if (msg.type === 'convert-h2d') {
+    try {
+      if (!msg.data) {
+        throw new Error('H2D payload missing');
+      }
+      figma.ui.postMessage({ type: 'conversion-progress', message: 'Importing H2D archive...' });
+      const response = await fetch(`${msg.apiUrl}/import-h2d`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: msg.data, filename: msg.filename }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ConversionResponse = await response.json();
+      figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
+      await createFigmaNodes(data.nodes);
+      figma.ui.postMessage({ type: 'conversion-complete', data });
+      figma.notify(`Imported ${data.nodes.length} nodes from H2D archive.`);
+    } catch (error: any) {
+      console.error('H2D import error:', error);
+      const message = error?.message || 'Unknown error occurred';
+      figma.ui.postMessage({ type: 'conversion-error', error: message });
+      figma.notify(`Error: ${message}`, { error: true });
     }
   } else if (msg.type === 'import-file') {
     figma.notify('File import not yet supported. Please paste HTML directly.', { timeout: 3000 });
@@ -149,6 +217,8 @@ async function createNode(nodeData: FigmaNodeData): Promise<SceneNode | null> {
   try {
     if (nodeData.type === 'TEXT') {
       node = await createTextNode(nodeData);
+    } else if (nodeData.type === 'IMAGE') {
+      node = await createImageNode(nodeData);
     } else if (nodeData.type === 'FRAME') {
       node = createFrameNode(nodeData);
     }
@@ -157,6 +227,14 @@ async function createNode(nodeData: FigmaNodeData): Promise<SceneNode | null> {
 
     // Set common properties
     node.name = nodeData.name || nodeData.type.toLowerCase();
+
+    if (typeof nodeData.visible === 'boolean') {
+      node.visible = nodeData.visible;
+    }
+
+    if (nodeData.meta?.attributes?.role === 'screenshot' && 'locked' in node) {
+      (node as SceneNode & { locked: boolean }).locked = true;
+    }
 
     // Store in map
     nodeMap.set(nodeData.id, node);
@@ -170,6 +248,7 @@ async function createNode(nodeData: FigmaNodeData): Promise<SceneNode | null> {
       figma.currentPage.appendChild(node);
     }
 
+    applyLayoutParticipation(node, nodeData, parentData);
     applyPosition(node, nodeData, parentData);
 
     return node;
@@ -180,17 +259,57 @@ async function createNode(nodeData: FigmaNodeData): Promise<SceneNode | null> {
 
 function applyPosition(node: SceneNode, nodeData: FigmaNodeData, parentData?: FigmaNodeData) {
   const parentLayoutMode = parentData?.layoutMode && parentData.layoutMode !== 'NONE';
+  const isAbsolute = nodeData.layoutPositioning === 'ABSOLUTE';
+  const layoutNode = node as SceneNode & LayoutMixin;
 
-  if (parentLayoutMode) {
+  // For absolute positioned elements, always set position
+  if (isAbsolute && 'layoutPositioning' in layoutNode) {
+    layoutNode.layoutPositioning = 'ABSOLUTE';
+  }
+
+  // Calculate position relative to parent
+  const offsetX = parentData ? parentData.boundingBox.x : 0;
+  const offsetY = parentData ? parentData.boundingBox.y : 0;
+
+  // If parent has auto layout but child is not absolute, skip position setting
+  // Figma auto layout will handle positioning
+  if (parentLayoutMode && !isAbsolute) {
     return;
   }
 
-  const offsetX = parentData ? parentData.boundingBox.x : 0;
-  const offsetY = parentData ? parentData.boundingBox.y : 0;
-  const layoutNode = node as SceneNode & LayoutMixin;
-
+  // Set position for:
+  // 1. Nodes without auto layout parents
+  // 2. Absolutely positioned nodes
   layoutNode.x = nodeData.boundingBox.x - offsetX;
   layoutNode.y = nodeData.boundingBox.y - offsetY;
+}
+
+function applyLayoutParticipation(node: SceneNode, nodeData: FigmaNodeData, parentData?: FigmaNodeData) {
+  const layoutNode = node as SceneNode & LayoutMixin;
+
+  if ('layoutPositioning' in layoutNode) {
+    layoutNode.layoutPositioning = nodeData.layoutPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO';
+  }
+
+  if (!parentData || parentData.layoutMode === 'NONE') {
+    return;
+  }
+
+  if (nodeData.layoutAlign) {
+    layoutNode.layoutAlign = nodeData.layoutAlign;
+  }
+
+  if (nodeData.layoutGrow !== undefined) {
+    layoutNode.layoutGrow = nodeData.layoutGrow;
+  }
+
+  if (nodeData.layoutShrink !== undefined && 'layoutShrink' in layoutNode) {
+    (layoutNode as any).layoutShrink = nodeData.layoutShrink;
+  }
+
+  if (nodeData.layoutBasis !== undefined && 'layoutBasis' in layoutNode) {
+    (layoutNode as any).layoutBasis = nodeData.layoutBasis;
+  }
 }
 
 function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = figma.createFrame();
@@ -250,6 +369,33 @@ function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = fi
       frame.paddingBottom = nodeData.padding.bottom;
       frame.paddingLeft = nodeData.padding.left;
     }
+
+    if (nodeData.primaryAxisAlignItems) {
+      frame.primaryAxisAlignItems = nodeData.primaryAxisAlignItems;
+    }
+
+    if (nodeData.counterAxisAlignItems) {
+      // Figma API doesn't support STRETCH for counterAxisAlignItems
+      // Map STRETCH to MAX as a reasonable fallback
+      const alignValue = nodeData.counterAxisAlignItems === 'STRETCH' ? 'MAX' : nodeData.counterAxisAlignItems;
+      frame.counterAxisAlignItems = alignValue;
+    }
+
+    if (nodeData.primaryAxisSizingMode) {
+      frame.primaryAxisSizingMode = nodeData.primaryAxisSizingMode;
+    }
+
+    if (nodeData.counterAxisSizingMode) {
+      frame.counterAxisSizingMode = nodeData.counterAxisSizingMode;
+    }
+
+    if (nodeData.layoutWrap) {
+      frame.layoutWrap = nodeData.layoutWrap;
+    }
+
+    if (nodeData.primaryAxisAlignContent && 'primaryAxisAlignContent' in frame) {
+      (frame as any).primaryAxisAlignContent = nodeData.primaryAxisAlignContent;
+    }
   }
 
   // Overflow
@@ -262,7 +408,137 @@ function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = fi
     frame.clipsContent = nodeData.clipsContent;
   }
 
+  if (nodeData.layoutPositioning === 'ABSOLUTE' && 'layoutPositioning' in frame) {
+    frame.layoutPositioning = 'ABSOLUTE';
+  }
+
   return frame;
+}
+
+async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode> {
+  const rect = figma.createRectangle();
+
+  // Size
+  rect.resize(
+    Math.max(nodeData.boundingBox.width, 1),
+    Math.max(nodeData.boundingBox.height, 1)
+  );
+
+  const imageSrc = nodeData.meta?.attributes?.src;
+  const imageData = nodeData.meta?.imageData;
+  const alt = nodeData.meta?.attributes?.alt;
+
+  // Try to use actual image data if available
+  if (imageData) {
+    try {
+      // Check if it's an SVG data URL
+      const isSvg = imageData.startsWith('data:image/svg+xml');
+
+      if (isSvg) {
+        // For SVG, try to convert it to PNG first
+        // Figma doesn't support SVG fills directly, so we need to rasterize
+        try {
+          const bytes = decodeBase64ToUint8Array(imageData);
+          const image = figma.createImage(bytes);
+
+          rect.fills = [{
+            type: 'IMAGE',
+            imageHash: image.hash,
+            scaleMode: 'FIT',
+          }];
+
+          rect.name = alt || 'SVG Image';
+        } catch (svgError) {
+          // SVG conversion failed, use placeholder
+          console.warn('Could not convert SVG to image:', svgError);
+          rect.fills = [{
+            type: 'SOLID',
+            color: { r: 0.95, g: 0.95, b: 0.95 },
+          }];
+          rect.name = alt || 'SVG (conversion failed)';
+        }
+      } else {
+        // Regular image (PNG/JPG)
+        const bytes = decodeBase64ToUint8Array(imageData);
+        const image = figma.createImage(bytes);
+
+        // Use image as fill
+        rect.fills = [{
+          type: 'IMAGE',
+          imageHash: image.hash,
+          scaleMode: 'FIT',
+        }];
+
+        // Set name
+        if (alt) {
+          rect.name = alt;
+        } else if (imageSrc) {
+          const srcName = imageSrc.substring(imageSrc.lastIndexOf('/') + 1);
+          rect.name = srcName.length > 30 ? srcName.substring(0, 30) : srcName;
+        } else {
+          rect.name = 'Image';
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create image from data:', error);
+      // Fallback to placeholder
+      rect.fills = [{
+        type: 'SOLID',
+        color: { r: 0.9, g: 0.9, b: 0.9 },
+      }];
+      rect.name = alt || 'Image (load failed)';
+
+      // Add warning text overlay
+      rect.strokes = [{
+        type: 'SOLID',
+        color: { r: 0.9, g: 0.5, b: 0.1 },
+      }];
+      rect.strokeWeight = 2;
+    }
+  } else if (imageSrc) {
+    // No image data available - create placeholder
+    rect.fills = [{
+      type: 'SOLID',
+      color: { r: 0.9, g: 0.9, b: 0.9 },
+    }];
+
+    if (alt) {
+      rect.name = `Image: ${alt}`;
+    } else {
+      rect.name = `Image: ${imageSrc.substring(imageSrc.lastIndexOf('/') + 1, imageSrc.lastIndexOf('/') + 30)}`;
+    }
+
+    // Add border to indicate it's a placeholder
+    rect.strokes = [{
+      type: 'SOLID',
+      color: { r: 0.7, g: 0.7, b: 0.7 },
+    }];
+    rect.strokeWeight = 1;
+  } else {
+    // Fallback placeholder
+    rect.fills = [{
+      type: 'SOLID',
+      color: { r: 0.85, g: 0.85, b: 0.85 },
+    }];
+    rect.name = 'Image (no src)';
+    rect.strokes = [{
+      type: 'SOLID',
+      color: { r: 0.7, g: 0.7, b: 0.7 },
+    }];
+    rect.strokeWeight = 1;
+  }
+
+  // Check if it's a logo or icon from meta
+  const isLogo = nodeData.meta?.imageData?.isLogo || nodeData.meta?.classes?.some((c: string) => /logo/i.test(c));
+  const isIcon = nodeData.meta?.imageData?.isIcon || nodeData.meta?.classes?.some((c: string) => /icon/i.test(c));
+
+  if (isIcon) {
+    rect.cornerRadius = nodeData.boundingBox.width / 4;
+  } else if (isLogo) {
+    rect.cornerRadius = 4;
+  }
+
+  return rect;
 }
 
 async function createTextNode(nodeData: FigmaNodeData): Promise<TextNode> {
@@ -271,14 +547,22 @@ async function createTextNode(nodeData: FigmaNodeData): Promise<TextNode> {
   // Load font before mutating text properties
   const fontFamily = nodeData.text?.fontFamily || 'Inter';
   const fontWeight = normalizeFontWeight(nodeData.text?.fontWeight);
-  let fontName: FontName = { family: fontFamily, style: fontWeight };
+  const fontStyle = resolveFontStyle(fontWeight, nodeData.text?.fontStyle);
+  let fontName: FontName = { family: fontFamily, style: fontStyle };
 
   try {
     await figma.loadFontAsync(fontName);
   } catch (error) {
-    // Fallback to Inter Regular if requested font is unavailable
-    fontName = { family: 'Inter', style: 'Regular' };
-    await figma.loadFontAsync(fontName);
+    // Fallback to Inter with similar weight/style if requested font is unavailable
+    const fallbackWeight = normalizeFontWeight(nodeData.text?.fontWeight);
+    const fallbackStyle = resolveFontStyle(fallbackWeight, nodeData.text?.fontStyle);
+    fontName = { family: 'Inter', style: fallbackStyle };
+    try {
+      await figma.loadFontAsync(fontName);
+    } catch {
+      fontName = { family: 'Inter', style: 'Regular' };
+      await figma.loadFontAsync(fontName);
+    }
   }
 
   text.fontName = fontName;
@@ -286,14 +570,32 @@ async function createTextNode(nodeData: FigmaNodeData): Promise<TextNode> {
   // Text content
   text.characters = nodeData.text?.characters || '';
 
-  // Size
-  if (nodeData.boundingBox.width > 0) {
-    text.resize(nodeData.boundingBox.width, nodeData.boundingBox.height || 100);
-  }
-
-  // Font size
+  // Font size (set before resizing)
   if (nodeData.text?.fontSize) {
     text.fontSize = nodeData.text.fontSize;
+  }
+
+  // Size - use auto-resize to prevent truncation
+  if (nodeData.boundingBox.width > 0) {
+    // Set text auto-resize to WIDTH_AND_HEIGHT first to get full dimensions
+    text.textAutoResize = 'WIDTH_AND_HEIGHT';
+
+    // Get the natural size of the text
+    const naturalWidth = text.width;
+    const naturalHeight = text.height;
+
+    // If the bounding box width is larger than natural width, use fixed width
+    if (nodeData.boundingBox.width >= naturalWidth) {
+      text.textAutoResize = 'HEIGHT';
+      text.resize(nodeData.boundingBox.width, text.height);
+    }
+    // Otherwise, let it auto-resize to show full text
+    else {
+      text.textAutoResize = 'WIDTH_AND_HEIGHT';
+    }
+  } else {
+    // If no width specified, use auto-resize
+    text.textAutoResize = 'WIDTH_AND_HEIGHT';
   }
 
   // Line height
@@ -319,6 +621,14 @@ async function createTextNode(nodeData: FigmaNodeData): Promise<TextNode> {
 
   if (nodeData.text?.textAlignVertical) {
     text.textAlignVertical = nodeData.text.textAlignVertical;
+  }
+
+  if (nodeData.text?.textCase) {
+    text.textCase = nodeData.text.textCase;
+  }
+
+  if (nodeData.text?.textDecoration) {
+    text.textDecoration = nodeData.text.textDecoration;
   }
 
   // Text fills
@@ -349,6 +659,71 @@ function normalizeFontWeight(weight?: number | string): string {
   return weightMap[weight.toString()] || 'Regular';
 }
 
+function resolveFontStyle(weightStyle: string, fontStyle?: string): string {
+  if (!fontStyle || fontStyle === 'normal') {
+    return weightStyle;
+  }
+
+  const lowered = fontStyle.toLowerCase();
+  if (lowered === 'italic' || lowered === 'oblique') {
+    if (weightStyle.toLowerCase().includes('italic')) {
+      return weightStyle;
+    }
+    if (weightStyle === 'Regular') {
+      return 'Italic';
+    }
+    return `${weightStyle} Italic`;
+  }
+
+  return weightStyle;
+}
+
+function decodeBase64ToUint8Array(base64: string): Uint8Array {
+  const normalized = base64.includes(',') ? base64.split(',').pop()! : base64;
+  const globalAtob = typeof globalThis !== 'undefined' && typeof (globalThis as any).atob === 'function'
+    ? (globalThis as any).atob
+    : undefined;
+
+  if (globalAtob) {
+    const binary = globalAtob(normalized);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  const cleaned = normalized.replace(/[^A-Za-z0-9+/=]/g, '');
+  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  const output: number[] = [];
+  let index = 0;
+
+  while (index < cleaned.length) {
+    const enc1 = base64Chars.indexOf(cleaned.charAt(index++));
+    const enc2 = base64Chars.indexOf(cleaned.charAt(index++));
+    const enc3 = base64Chars.indexOf(cleaned.charAt(index++));
+    const enc4 = base64Chars.indexOf(cleaned.charAt(index++));
+
+    if (enc1 < 0 || enc2 < 0) {
+      break;
+    }
+
+    const chr1 = (enc1 << 2) | (enc2 >> 4);
+    output.push(chr1 & 0xff);
+
+    if (enc3 >= 0 && enc3 < 64) {
+      const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+      output.push(chr2 & 0xff);
+
+      if (enc4 >= 0 && enc4 < 64) {
+        const chr3 = ((enc3 & 3) << 6) | enc4;
+        output.push(chr3 & 0xff);
+      }
+    }
+  }
+
+  return new Uint8Array(output);
+}
 function convertFills(fills: any[]): Paint[] {
   return fills.map((fill) => {
     if (fill.type === 'SOLID') {
@@ -375,6 +750,33 @@ function convertFills(fills: any[]): Paint[] {
         })),
         gradientTransform: calculateGradientTransform(fill.gradientHandlePositions || []),
       } as GradientPaint;
+    } else if (fill.type === 'IMAGE') {
+      const cacheKey = fill.imageRef ?? fill.imageData;
+      let imageHash = cacheKey ? imageHashCache.get(cacheKey) : undefined;
+
+      if (!imageHash) {
+        if (!fill.imageData) {
+          console.warn('Image fill missing imageData; skipping image fill');
+          return {
+            type: 'SOLID',
+            color: { r: 0, g: 0, b: 0 },
+            opacity: 0,
+          } as SolidPaint;
+        }
+
+        const bytes = decodeBase64ToUint8Array(fill.imageData);
+        const image = figma.createImage(bytes);
+        imageHash = image.hash;
+        if (cacheKey) {
+          imageHashCache.set(cacheKey, imageHash);
+        }
+      }
+
+      return {
+        type: 'IMAGE',
+        imageHash,
+        scaleMode: fill.scaleMode ?? 'FILL',
+      } as ImagePaint;
     }
 
     // Default fallback
@@ -461,4 +863,9 @@ function convertEffects(effects: any[]): Effect[] {
 
   return result;
 }
+
+
+
+
+
 

@@ -5,6 +5,8 @@ export interface RenderHtmlOptions {
   height?: number;
   enableScreenshot?: boolean;
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
+  navigationTimeoutMs?: number;
+  ignoreHTTPSErrors?: boolean;
 }
 
 export interface RenderedHtmlArtifact {

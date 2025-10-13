@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -345,6 +345,31 @@
   <button id="convert-btn">Convert to Figma</button>
   <button id="import-file-btn" class="button-secondary">Import HTML File</button>
 
+  <div class="section">
+    <div class="section-title">Exact Replica (No AI)</div>
+    <div class="input-group">
+      <label for="exact-url">URL</label>
+      <input type="text" id="exact-url" placeholder="https://example.com" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label for="exact-viewport">Viewport</label>
+      <select id="exact-viewport">
+        <option value="1920x1080">Desktop · 1920 × 1080</option>
+        <option value="1440x900">Desktop · 1440 × 900</option>
+        <option value="1280x720">Desktop · 1280 × 720</option>
+        <option value="375x667">Mobile · 375 × 667</option>
+      </select>
+    </div>
+    <div class="button-row">
+      <button id="convert-exact-url" class="primary">Render URL (Exact)</button>
+      <label class="upload-label">
+        <input type="file" id="h2d-file-input" accept=".h2d,.zip" hidden>
+        <span>Import .h2d</span>
+      </label>
+    </div>
+    <p class="helper-text">Generate a pixel-faithful Figma layout without AI by mirroring a production URL or importing a code.to.design archive.</p>
+  </div>
+
   <div class="loader" id="loader">
     <div class="spinner"></div>
   </div>
@@ -374,6 +399,10 @@
     const htmlInput = document.getElementById('html-input');
     const apiUrl = document.getElementById('api-url');
     const convertBtn = document.getElementById('convert-btn');
+    const convertExactBtn = document.getElementById('convert-exact-url');
+    const exactUrlInput = document.getElementById('exact-url');
+    const exactViewportSelect = document.getElementById('exact-viewport');
+    const h2dFileInput = document.getElementById('h2d-file-input');
     const importFileBtn = document.getElementById('import-file-btn');
     const loader = document.getElementById('loader');
     const DEFAULT_API_URL = 'http://localhost:4000';
@@ -413,7 +442,8 @@
       storageAvailable = false;
       console.warn('Local storage unavailable, falling back to in-memory API URL cache.', err);
     }
-\r\n    const statusDiv = document.getElementById('status');
+
+    const statusDiv = document.getElementById('status');
     const statsDiv = document.getElementById('stats');
 
     // Example templates
@@ -454,11 +484,23 @@
     function showLoader() {
       loader.style.display = 'flex';
       convertBtn.disabled = true;
+      if (convertExactBtn instanceof HTMLButtonElement) {
+        convertExactBtn.disabled = true;
+      }
+      if (h2dFileInput instanceof HTMLInputElement) {
+        h2dFileInput.disabled = true;
+      }
     }
 
     function hideLoader() {
       loader.style.display = 'none';
       convertBtn.disabled = false;
+      if (convertExactBtn instanceof HTMLButtonElement) {
+        convertExactBtn.disabled = false;
+      }
+      if (h2dFileInput instanceof HTMLInputElement) {
+        h2dFileInput.disabled = false;
+      }
     }
 
     function updateStats(data) {
@@ -469,12 +511,13 @@
         const time = Math.round(data.meta.render.processingTimeMs);
         document.getElementById('stat-time').textContent = time + 'ms';
       }
-      if (data.quality) {
-        const accuracy = Math.round(data.quality.accuracyScore * 100);
+      const quality = data.quality || (data.meta && data.meta.quality);
+      if (quality && typeof quality.accuracyScore === 'number') {
+        const accuracy = Math.round(quality.accuracyScore * 100);
         document.getElementById('stat-accuracy').textContent = accuracy + '%';
       }
       if (data.meta && data.meta.info) {
-        const aiSuggestions = data.meta.info.find(i => i.includes('AI-driven'));
+        const aiSuggestions = data.meta.info.find((info) => info.includes('AI-driven'));
         if (aiSuggestions) {
           const match = aiSuggestions.match(/(\d+)/);
           if (match) {
@@ -484,6 +527,15 @@
       }
       statsDiv.style.display = 'block';
     }
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 1) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
 
     convertBtn.addEventListener('click', async () => {
       const htmlContent = htmlInput.value.trim();
@@ -507,7 +559,6 @@
         skipVision
       };
 
-      // Send to plugin code
       parent.postMessage({
         pluginMessage: {
           type: 'convert',
@@ -518,30 +569,106 @@
       }, '*');
     });
 
-    importFileBtn.addEventListener('click', () => {
-      parent.postMessage({
-        pluginMessage: {
-          type: 'import-file'
+    if (
+      convertExactBtn instanceof HTMLButtonElement &&
+      exactUrlInput instanceof HTMLInputElement &&
+      exactViewportSelect instanceof HTMLSelectElement &&
+      statsDiv instanceof HTMLElement &&
+      apiUrl instanceof HTMLInputElement
+    ) {
+      convertExactBtn.addEventListener('click', () => {
+        const url = exactUrlInput.value.trim();
+        if (!url) {
+          showStatus('Please enter a URL to mirror', 'error');
+          return;
         }
-      }, '*');
-    });
 
+        hideStatus();
+        showLoader();
+        statsDiv.style.display = 'none';
+
+        const [widthStr, heightStr] = exactViewportSelect.value.split('x');
+        const viewport = {
+          width: parseInt(widthStr, 10) || 1920,
+          height: parseInt(heightStr, 10) || 1080,
+        };
+
+        parent.postMessage({
+          pluginMessage: {
+            type: 'convert-exact-url',
+            apiUrl: apiUrl.value,
+            url,
+            viewport,
+            waitUntil: 'networkidle',
+          }
+        }, '*');
+      });
+    }
+
+    if (
+      h2dFileInput instanceof HTMLInputElement &&
+      statsDiv instanceof HTMLElement &&
+      apiUrl instanceof HTMLInputElement
+    ) {
+      h2dFileInput.addEventListener('change', async (event) => {
+        const target = event.target;
+        const file = target instanceof HTMLInputElement && target.files ? target.files[0] : null;
+        if (!file) {
+          return;
+        }
+
+        hideStatus();
+        showLoader();
+        statsDiv.style.display = 'none';
+
+        try {
+          const buffer = await file.arrayBuffer();
+          const base64 = arrayBufferToBase64(buffer);
+          parent.postMessage({
+            pluginMessage: {
+              type: 'convert-h2d',
+              apiUrl: apiUrl.value,
+              filename: file.name,
+              data: base64,
+            }
+          }, '*');
+        } catch (error) {
+          console.error('Failed to read H2D archive', error);
+          showStatus('Failed to read archive', 'error');
+          hideLoader();
+        } finally {
+          if (target instanceof HTMLInputElement) {
+            target.value = '';
+          }
+        }
+      });
+    }
+
+    if (importFileBtn instanceof HTMLButtonElement) {
+      importFileBtn.addEventListener('click', () => {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'import-file'
+          }
+        }, '*');
+      });
+    }
     // Listen for messages from plugin code
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
 
       if (msg.type === 'conversion-complete') {
         hideLoader();
-        showStatus(`??Successfully created ${msg.data.nodes.length} Figma nodes!`, 'success');
+        showStatus(`Created ${msg.data.nodes.length} Figma nodes.`, 'success');
         updateStats(msg.data);
       } else if (msg.type === 'conversion-error') {
         hideLoader();
-        showStatus(`??Error: ${msg.error}`, 'error');
+        showStatus(`Error: ${msg.error}`, 'error');
       } else if (msg.type === 'conversion-progress') {
-        showStatus(`??${msg.message}`, 'info');
+        showStatus(msg.message, 'info');
       } else if (msg.type === 'file-selected') {
         htmlInput.value = msg.content;
-        showStatus('??File loaded successfully', 'success');
+        showStatus('File loaded successfully', 'success');
       }
     };
 
@@ -562,6 +689,12 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,22 @@
+
+> htf2@1.0.0 dev
+> ts-node-dev --respawn --transpile-only src/server.ts
+
+[INFO] 20:27:09 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[dotenv@17.2.3] injecting env (5) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[INFO] 20:53:48 Restarting: C:\Users\keduall\HTF2\src\utils\logger.ts has been modified
+Error: EBUSY: resource busy or locked, open 'C:\Users\keduall\HTF2\src\utils\logger.ts'
+    at Object.readFileSync (node:fs:442:20)
+    at Object.compileChanged (C:\Users\keduall\HTF2\node_modules\ts-node-dev\lib\compiler.js:210:41)
+    at FSWatcher.restart (C:\Users\keduall\HTF2\node_modules\ts-node-dev\lib\index.js:226:18)
+    at FSWatcher.emit (node:events:518:28)
+    at FSWatcher.emit (node:domain:489:12)
+    at FSWatcher.emitWithAll (C:\Users\keduall\HTF2\node_modules\chokidar\index.js:540:8)
+    at FSWatcher._emit (C:\Users\keduall\HTF2\node_modules\chokidar\index.js:632:8)
+    at listener (C:\Users\keduall\HTF2\node_modules\chokidar\lib\nodefs-handler.js:370:20) {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'open',
+  path: 'C:\\Users\\keduall\\HTF2\\src\\utils\\logger.ts'
+}
+[dotenv@17.2.3] injecting env (5) from .env -- tip: ⚙️  enable debug logging with { debug: true }

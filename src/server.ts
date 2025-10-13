@@ -2,6 +2,8 @@
 import multer from 'multer';
 import path from 'path';
 import { HtmlProcessingService } from './services/html-processing-service';
+import { renderExactFromUrl, renderExactFromHtml } from './services/exact-replica-service';
+import { importH2DArchive } from './services/h2d-import-service';
 import { evaluateQuality } from './services/quality-validator';
 import { logger } from './utils/logger';
 import { ProcessingError, isProcessingError } from './utils/error-handler';
@@ -24,7 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (_req, res) => {
@@ -39,6 +41,56 @@ app.get('/info', (_req, res) => {
   });
 });
 
+app.post('/render-url', async (req, res, next) => {
+  try {
+    const { url, viewport, waitUntil } = req.body;
+    if (!url) {
+      throw new ProcessingError('url is required', 'BAD_REQUEST');
+    }
+    const result = await renderExactFromUrl(url, { viewport, waitUntil });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/render-url-html', async (req, res, next) => {
+  try {
+    const { htmlContent, viewport } = req.body;
+    if (!htmlContent) {
+      throw new ProcessingError('htmlContent is required', 'BAD_REQUEST');
+    }
+    const result = await renderExactFromHtml(htmlContent, viewport);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/import-h2d', async (req, res, next) => {
+  try {
+    const { data } = req.body;
+    if (!data) {
+      throw new ProcessingError('data field (base64) is required', 'BAD_REQUEST');
+    }
+    const buffer = Buffer.from(data, 'base64');
+    const { conversion, tokens } = await importH2DArchive(buffer);
+    const vision = {
+      source: 'heuristic',
+      summary: 'Exact archive import (AI disabled)',
+      annotations: [] as any[],
+      issues: ['Vision disabled'],
+    };
+    res.json({
+      nodes: conversion.nodes,
+      vision,
+      meta: conversion.meta,
+      archiveTokens: tokens ?? null,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 app.post('/render-html-text', async (req, res, next) => {
   try {
     const { htmlContent, filename, options } = req.body;
@@ -112,6 +164,7 @@ export const start = () => {
 if (require.main === module) {
   start();
 }
+
 
 
 
