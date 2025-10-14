@@ -20,7 +20,7 @@ export class SvgToPngService {
       logger.debug('Converting SVG to PNG', { svgLength: svgData.length });
 
       // SVG를 Canvas로 렌더링하여 PNG로 변환
-      const canvas = this.createCanvasFromSvg(svgData);
+      const canvas = await this.createCanvasFromSvg(svgData);
       if (!canvas) {
         return { success: false, error: 'Failed to create canvas from SVG' };
       }
@@ -39,15 +39,15 @@ export class SvgToPngService {
         pngData: `data:image/png;base64,${base64Data}`
       };
     } catch (error) {
-      logger.warn('SVG to PNG conversion failed', { error: error.message });
-      return { success: false, error: error.message };
+      logger.warn('SVG to PNG conversion failed', { error: (error as Error).message });
+      return { success: false, error: (error as Error).message };
     }
   }
 
   /**
    * SVG를 Canvas로 렌더링
    */
-  private createCanvasFromSvg(svgData: string): HTMLCanvasElement | null {
+  private async createCanvasFromSvg(svgData: string): Promise<HTMLCanvasElement | null> {
     try {
       // SVG 문자열을 DOM 요소로 변환
       const parser = new DOMParser();
@@ -97,7 +97,7 @@ export class SvgToPngService {
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
       const svgUrl = URL.createObjectURL(svgBlob);
       
-      return new Promise<HTMLCanvasElement | null>((resolve) => {
+      return new Promise<HTMLCanvasElement | null>((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
           ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
@@ -111,7 +111,7 @@ export class SvgToPngService {
         img.src = svgUrl;
       });
     } catch (error) {
-      logger.warn('Canvas creation failed', { error: error.message });
+      logger.warn('Canvas creation failed', { error: (error as Error).message });
       return null;
     }
   }

@@ -74,7 +74,7 @@ const normalizeUrl = (input: string): string => {
   }
 };
 
-const PLAYWRIGHT_DEFAULT_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT ?? 45000);
+const PLAYWRIGHT_DEFAULT_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT ?? 15000); // 15 seconds for faster response
 
 const buildExactReplicaResponse = (
   capture: PlaywrightCaptureArtifact,

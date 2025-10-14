@@ -107,6 +107,23 @@ export interface FigmaNodeData {
       colors?: { fillToken?: string; strokeToken?: string; textToken?: string };
       actions?: { role?: string; recommendedRatio?: number; iconSize?: number };
     };
+    imageData?: any;
+    snapshot?: any;
+    accurateImageInfo?: {
+      width: number;
+      height: number;
+      x: number;
+      y: number;
+      tagName: string;
+      src?: string;
+    };
+    spriteInfo?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      originalUrl?: string;
+    };
   };
 }
 

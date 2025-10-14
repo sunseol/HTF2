@@ -53,10 +53,34 @@ interface FigmaNodeData {
   meta?: any;
 }
 
+interface SpriteInfo {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  originalUrl?: string;
+}
+
+interface ImageSpriteSheet {
+  spriteImage: string;
+  images: Array<{
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    originalUrl?: string;
+  }>;
+  totalWidth: number;
+  totalHeight: number;
+}
+
 interface ConversionResponse {
   nodes: FigmaNodeData[];
   vision?: any;
-  meta?: any;
+  meta?: any & {
+    spriteSheet?: ImageSpriteSheet;
+  };
   quality?: any;
 }
 
@@ -65,22 +89,32 @@ const nodeMap = new Map<string, SceneNode>();
 const nodeDataMap = new Map<string, FigmaNodeData>();
 const imageHashCache = new Map<string, string>();
 
+// 스프라이트 시트 이미지 캐시
+let spriteSheetImageHash: string | undefined;
+
 declare const atob: (data: string) => string;
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'convert') {
     try {
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Sending request to backend...' });
-      const response = await fetch(`${msg.apiUrl}/render-html-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          htmlContent: msg.htmlContent,
-          options: msg.options,
+      
+      // 타임아웃이 있는 fetch 구현
+      const response = await Promise.race([
+        fetch(`${msg.apiUrl}/render-html-text`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            htmlContent: msg.htmlContent,
+            options: msg.options,
+          }),
         }),
-      });
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout: Backend took too long to respond')), 60000)
+        )
+      ]);
 
       if (!response.ok) {
         throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
@@ -88,7 +122,7 @@ figma.ui.onmessage = async (msg) => {
 
       const data: ConversionResponse = await response.json();
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
-      await createFigmaNodes(data.nodes);
+      await createFigmaNodes(data.nodes, data.meta?.spriteSheet);
       figma.ui.postMessage({ type: 'conversion-complete', data });
       figma.notify(`Created ${data.nodes.length} Figma nodes.`);
     } catch (error: any) {
@@ -103,17 +137,24 @@ figma.ui.onmessage = async (msg) => {
         throw new Error('URL is required for exact conversion');
       }
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Rendering URL via exact pipeline...' });
-      const response = await fetch(`${msg.apiUrl}/render-url`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: msg.url,
-          viewport: msg.viewport,
-          waitUntil: msg.waitUntil,
+      
+      // 타임아웃이 있는 fetch 구현
+      const response = await Promise.race([
+        fetch(`${msg.apiUrl}/render-url`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: msg.url,
+            viewport: msg.viewport,
+            waitUntil: msg.waitUntil,
+          }),
         }),
-      });
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout: Backend took too long to respond')), 60000)
+        )
+      ]);
 
       if (!response.ok) {
         throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
@@ -121,7 +162,7 @@ figma.ui.onmessage = async (msg) => {
 
       const data: ConversionResponse = await response.json();
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
-      await createFigmaNodes(data.nodes);
+      await createFigmaNodes(data.nodes, data.meta?.spriteSheet);
       figma.ui.postMessage({ type: 'conversion-complete', data });
       figma.notify(`Created ${data.nodes.length} nodes from exact replica.`);
     } catch (error: any) {
@@ -150,7 +191,7 @@ figma.ui.onmessage = async (msg) => {
 
       const data: ConversionResponse = await response.json();
       figma.ui.postMessage({ type: 'conversion-progress', message: 'Creating Figma nodes...' });
-      await createFigmaNodes(data.nodes);
+      await createFigmaNodes(data.nodes, data.meta?.spriteSheet);
       figma.ui.postMessage({ type: 'conversion-complete', data });
       figma.notify(`Imported ${data.nodes.length} nodes from H2D archive.`);
     } catch (error: any) {
@@ -164,10 +205,32 @@ figma.ui.onmessage = async (msg) => {
   }
 };
 
-async function createFigmaNodes(nodes: FigmaNodeData[]): Promise<void> {
+async function createFigmaNodes(nodes: FigmaNodeData[], spriteSheet?: ImageSpriteSheet): Promise<void> {
   nodeMap.clear();
   nodeDataMap.clear();
+  spriteSheetImageHash = undefined;
   nodes.forEach((node) => nodeDataMap.set(node.id, node));
+
+  // 스프라이트 시트 이미지가 있으면 미리 로드
+  if (spriteSheet && spriteSheet.spriteImage) {
+    try {
+      const base64Data = spriteSheet.spriteImage.includes('base64,')
+        ? spriteSheet.spriteImage.split('base64,')[1]
+        : spriteSheet.spriteImage;
+
+      const bytes = decodeBase64ToUint8Array(base64Data);
+      const image = figma.createImage(bytes);
+      spriteSheetImageHash = image.hash;
+
+      console.log('Sprite sheet loaded:', {
+        hash: spriteSheetImageHash,
+        size: `${spriteSheet.totalWidth}x${spriteSheet.totalHeight}`,
+        imageCount: spriteSheet.images.length
+      });
+    } catch (error) {
+      console.error('Failed to load sprite sheet:', error);
+    }
+  }
 
   // Calculate the bounding box of all nodes
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -201,6 +264,34 @@ async function createFigmaNodes(nodes: FigmaNodeData[]): Promise<void> {
   for (const nodeData of sortedNodes) {
     await createNode(nodeData, rootContainer, minX - 20, minY - 20); // Add 20px offset for padding
   }
+
+  // Adjust layer order: bring image nodes to front
+  const imageNodes: SceneNode[] = [];
+  
+  // Collect image nodes based on original node data
+  nodeMap.forEach((node, nodeId) => {
+    const nodeData = nodeDataMap.get(nodeId);
+    if (nodeData && nodeData.type === 'IMAGE') {
+      imageNodes.push(node);
+    }
+  });
+
+  // Bring image nodes to front
+  imageNodes.forEach((imageNode) => {
+    try {
+      // Use moveInParentOrder to bring to front
+      const parent = imageNode.parent;
+      if (parent && 'children' in parent) {
+        // Move to the end of parent's children array (front layer)
+        parent.appendChild(imageNode);
+        console.log('Brought image node to front:', imageNode.name);
+      }
+    } catch (error) {
+      console.warn('Failed to bring image node to front:', imageNode.name, error);
+    }
+  });
+
+  console.log(`Layer order adjusted: ${imageNodes.length} image nodes brought to front`);
 
   // Focus on the root container
   figma.currentPage.selection = [rootContainer];
@@ -297,14 +388,26 @@ function applyPosition(node: SceneNode, nodeData: FigmaNodeData, parentData?: Fi
   let offsetX: number;
   let offsetY: number;
 
-  if (parentData) {
-    // Position relative to parent
-    offsetX = parentData.boundingBox.x;
-    offsetY = parentData.boundingBox.y;
+  // 정확한 이미지 위치 정보가 있으면 우선 사용
+  if (nodeData.meta?.accurateImageInfo) {
+    const accurateInfo = nodeData.meta.accurateImageInfo;
+    offsetX = accurateInfo.x;
+    offsetY = accurateInfo.y;
+    console.log('Using accurate image position:', {
+      id: nodeData.id,
+      original: { x: nodeData.boundingBox.x, y: nodeData.boundingBox.y },
+      accurate: { x: accurateInfo.x, y: accurateInfo.y }
+    });
   } else {
-    // Position relative to root container (apply global offset)
-    offsetX = rootOffsetX;
-    offsetY = rootOffsetY;
+    if (parentData) {
+      // Position relative to parent
+      offsetX = parentData.boundingBox.x;
+      offsetY = parentData.boundingBox.y;
+    } else {
+      // Position relative to root container (apply global offset)
+      offsetX = rootOffsetX;
+      offsetY = rootOffsetY;
+    }
   }
 
   // 정확한 위치 계산 - 반올림으로 픽셀 단위 정렬
@@ -484,9 +587,82 @@ function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = fi
 async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode | FrameNode> {
   const rect = figma.createRectangle();
 
-  // 정확한 원본 크기 사용 - 강제 변경하지 않음
-  const width = Math.max(nodeData.boundingBox.width, 1);
-  const height = Math.max(nodeData.boundingBox.height, 1);
+  // SVG 크기 계산 개선
+  let width = Math.max(nodeData.boundingBox.width, 1);
+  let height = Math.max(nodeData.boundingBox.height, 1);
+
+  // SVG인 경우 특별 처리
+  const isSvg = nodeData.meta?.htmlTag === 'svg' || nodeData.meta?.imageData?.isSvg || nodeData.meta?.snapshot?.isSvg;
+  const isLogo = nodeData.meta?.imageData?.isLogo || nodeData.meta?.imageInfo?.isLogo;
+  
+  if (isSvg) {
+    if (isLogo) {
+      // 로고 SVG는 상위 DIV 크기를 유지 (확대하지 않음)
+      console.log('Logo SVG detected, keeping original size:', {
+        id: nodeData.id,
+        width,
+        height,
+        boundingBox: nodeData.boundingBox
+      });
+    } else {
+      // 일반 SVG의 경우 최소 크기 보장
+      width = Math.max(width, 20);
+      height = Math.max(height, 20);
+      
+      // accurateImageInfo가 있으면 우선 사용 (더 정확한 크기)
+      if (nodeData.meta?.accurateImageInfo) {
+        const accurateInfo = nodeData.meta.accurateImageInfo;
+        if (accurateInfo.width > 0 && accurateInfo.height > 0) {
+          width = Math.max(accurateInfo.width, width);
+          height = Math.max(accurateInfo.height, height);
+          console.log('Using accurate SVG dimensions:', {
+            id: nodeData.id,
+            original: { width: nodeData.boundingBox.width, height: nodeData.boundingBox.height },
+            accurate: { width: accurateInfo.width, height: accurateInfo.height },
+            final: { width, height }
+          });
+        }
+      }
+      
+      // 일반 SVG가 너무 작으면 기본 크기로 확대
+      if (width < 30 || height < 30) {
+        const scale = Math.max(30 / width, 30 / height);
+        width *= scale;
+        height *= scale;
+        console.log('Scaled up small SVG:', {
+          id: nodeData.id,
+          original: { width: nodeData.boundingBox.width, height: nodeData.boundingBox.height },
+          scaled: { width, height, scale }
+        });
+      }
+    }
+  } else {
+    // 일반 이미지의 경우 accurateImageInfo 사용
+    if (nodeData.meta?.accurateImageInfo) {
+      const accurateInfo = nodeData.meta.accurateImageInfo;
+      if (accurateInfo.width > 0 && accurateInfo.height > 0) {
+        width = accurateInfo.width;
+        height = accurateInfo.height;
+        console.log('Using accurate image dimensions:', {
+          id: nodeData.id,
+          original: { width: nodeData.boundingBox.width, height: nodeData.boundingBox.height },
+          accurate: { width: accurateInfo.width, height: accurateInfo.height }
+        });
+      }
+    }
+  }
+
+  // 스프라이트 정보가 있으면 우선 사용
+  const spriteInfo = nodeData.meta?.spriteInfo as SpriteInfo | undefined;
+  if (spriteInfo) {
+    width = Math.max(spriteInfo.width, 1);
+    height = Math.max(spriteInfo.height, 1);
+    console.log('Using sprite dimensions:', {
+      id: nodeData.id,
+      spriteSize: { width: spriteInfo.width, height: spriteInfo.height },
+      spritePosition: { x: spriteInfo.x, y: spriteInfo.y }
+    });
+  }
 
   // Size
   rect.resize(width, height);
@@ -509,40 +685,50 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode |
   // imageData 추출 로직 - 여러 경로 시도
   let imageData: string | undefined;
 
-  // 1. meta.imageData가 객체인 경우 (ImageInfo 래핑)
-  if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'object') {
+  // 1. snapshot에서 직접 가져오기 (우선순위 1)
+  if (nodeData.meta?.snapshot?.imageData) {
+    imageData = nodeData.meta.snapshot.imageData;
+  }
+  // 2. meta.imageData가 객체인 경우 (ImageInfo 래핑)
+  else if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'object') {
     const imgObj = nodeData.meta.imageData as any;
     imageData = imgObj.imageData; // ImageInfo.imageData 필드
   }
-  // 2. meta.imageData가 직접 문자열인 경우
+  // 3. meta.imageData가 직접 문자열인 경우
   else if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'string') {
     imageData = nodeData.meta.imageData;
   }
-
-  // 3. snapshot에서 직접 가져오기
-  if (!imageData && nodeData.meta?.snapshot?.imageData) {
-    imageData = nodeData.meta.snapshot.imageData;
+  // 4. attributes에서 직접 가져오기 (data URI)
+  else if (nodeData.meta?.attributes?.src && nodeData.meta.attributes.src.startsWith('data:')) {
+    imageData = nodeData.meta.attributes.src;
+  }
+  // 5. 백엔드에서 직접 전달된 이미지 데이터 확인
+  else if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'string' && nodeData.meta.imageData.startsWith('data:image/')) {
+    imageData = nodeData.meta.imageData;
   }
 
   const alt = nodeData.meta?.attributes?.alt;
 
-  // 이미지 타입 확인
-  const isSvg = nodeData.meta?.imageData?.isSvg;
-  const isDownloadedImage = nodeData.meta?.imageData?.isDownloadedImage;
+  // 이미지 타입 확인 - 여러 경로에서 확인 (중복 선언 제거)
+  const isSvgImage = nodeData.meta?.imageData?.isSvg || nodeData.meta?.snapshot?.isSvg || nodeData.meta?.htmlTag === 'svg';
+  const isDownloadedImage = nodeData.meta?.imageData?.isDownloadedImage || nodeData.meta?.snapshot?.isDownloadedImage;
   
   console.log('Creating image node:', {
     id: nodeData.id,
     name: nodeData.name,
     tagName: nodeData.meta?.htmlTag,
-    src: imageSrc?.substring(0, 50),
-    isSvg,
+    src: imageSrc ? imageSrc.substring(0, 50) : 'no-src',
+    isSvg: isSvgImage,
     isDownloadedImage,
     hasImageData: !!imageData,
     imageDataType: typeof imageData,
     imageDataLength: typeof imageData === 'string' ? imageData.length : 0,
-    imageDataPrefix: typeof imageData === 'string' ? imageData.substring(0, 80) : JSON.stringify(imageData).substring(0, 200),
+    imageDataPrefix: typeof imageData === 'string' ? imageData.substring(0, 80) : (imageData ? JSON.stringify(imageData).substring(0, 200) : 'no-data'),
     metaKeys: nodeData.meta ? Object.keys(nodeData.meta) : [],
   });
+
+  // 스프라이트 정보가 있더라도 개별 이미지 데이터를 사용
+  // (Figma의 imageTransform으로 스프라이트 시트 일부만 표시하기는 어려움)
 
   // Try to use actual image data if available
   if (imageData && typeof imageData === 'string' && imageData.length > 0) {
@@ -566,7 +752,7 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode |
         tagName: nodeData.meta?.htmlTag,
         originalLength: imageData.length,
         base64Length: base64Data.length,
-        isSvg,
+        isSvg: isSvgImage,
         isDownloadedImage,
         dataPrefix: imageData.substring(0, 50),
         base64Prefix: base64Data.substring(0, 50)
@@ -597,21 +783,24 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode |
 
       const image = figma.createImage(bytes);
 
+      // SVG인 경우 스케일 모드 개선
+      const scaleMode = isSvgImage ? 'FILL' : 'FIT';
+      
       rect.fills = [{
         type: 'IMAGE',
         imageHash: image.hash,
-        scaleMode: 'FIT',
+        scaleMode: scaleMode,
       }];
 
       // Set name based on image type
-      if (isSvg) {
+      if (isSvgImage) {
         rect.name = alt || 'SVG Image';
         console.log('✓ SVG image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
       } else if (isDownloadedImage) {
         rect.name = alt || 'Downloaded Image';
         console.log('✓ Downloaded image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
       } else {
-        rect.name = alt || imageSrc?.split('/').pop()?.substring(0, 30) || 'Image';
+        rect.name = alt || (imageSrc ? imageSrc.split('/').pop()?.substring(0, 30) : 'Image') || 'Image';
         console.log('✓ Image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
       }
     } catch (error: any) {
@@ -620,12 +809,12 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode |
         stack: error.stack,
         imageDataLength: typeof imageData === 'string' ? imageData.length : 0,
         imageDataStart: typeof imageData === 'string' ? imageData.substring(0, 100) : 'not a string',
-        isSvg,
+        isSvg: isSvgImage,
         isDownloadedImage
       });
       
       // SVG 실패 시 텍스트로 대체
-      if (isSvg) {
+      if (isSvgImage) {
         rect.fills = [{
           type: 'SOLID',
           color: { r: 0.95, g: 0.95, b: 0.95 },
@@ -681,7 +870,8 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode |
     if (alt) {
       rect.name = `Image: ${alt}`;
     } else {
-      rect.name = `Image: ${imageSrc.substring(imageSrc.lastIndexOf('/') + 1, imageSrc.lastIndexOf('/') + 30)}`;
+      const fileName = imageSrc ? imageSrc.substring(imageSrc.lastIndexOf('/') + 1, imageSrc.lastIndexOf('/') + 30) : 'unknown';
+      rect.name = `Image: ${fileName}`;
     }
 
     // Add border to indicate it's a placeholder

@@ -7,11 +7,12 @@ import { detectComponentPatterns } from '../generators/component-generator';
 import { withTimeout, TimeoutError } from '../utils/async-utils';
 import { logger } from '../utils/logger';
 import { ProcessingError } from '../utils/error-handler';
-import type { ConversionResult } from '../types/converter.types';
+import type { ConversionResult, HTMLNodeSnapshot } from '../types/converter.types';
 import type { RenderHtmlOptions } from '../types/renderer.types';
 import type { FigmaNodeData, FigmaPaint } from '../types/figma.types';
 import type { VisionAnalysis } from '../types/vision.types';
 import { analyzeCapture } from './ai-enhancement-service';
+import { ImageSpriteService, ImageSpriteSheet } from './image-sprite-service';
 
 export interface HtmlProcessingRequest {
   htmlContent: string;
@@ -40,6 +41,7 @@ export interface HtmlProcessingResponse {
       nodeCount: number;
       componentCount: number;
     };
+    spriteSheet?: ImageSpriteSheet;
   };
   vision: VisionAnalysis;
 }
@@ -148,6 +150,8 @@ const applyVisionAnnotations = (nodes: FigmaNodeData[], vision: VisionAnalysis):
 };
 
 export class HtmlProcessingService {
+  private spriteService = new ImageSpriteService();
+
   async process(request: HtmlProcessingRequest): Promise<HtmlProcessingResponse> {
     if (!request.htmlContent) {
       throw new ProcessingError('htmlContent is required', 'BAD_REQUEST');
@@ -214,8 +218,43 @@ export class HtmlProcessingService {
       conversion.meta.info.push('Playwright capture unavailable; used JSDOM fallback');
     }
 
-    // 이미지 데이터를 노드에 직접 적용
+    // 이미지 수집 및 스프라이트 시트 생성
+    let spriteSheet: ImageSpriteSheet | undefined;
     if (rootSnapshot) {
+      // 1. 모든 이미지 수집
+      const imageMap = new Map<string, { data: string; width?: number; height?: number; originalUrl?: string }>();
+
+      const collectImages = (snap: HTMLNodeSnapshot) => {
+        if (snap.imageData && snap.imageData.length > 0) {
+          // accurateImageInfo가 있으면 우선 사용
+          const width = snap.accurateImageInfo?.width || snap.boundingBox?.width;
+          const height = snap.accurateImageInfo?.height || snap.boundingBox?.height;
+
+          imageMap.set(snap.id, {
+            data: snap.imageData,
+            width,
+            height,
+            originalUrl: snap.attributes?.src || snap.accurateImageInfo?.src
+          });
+        }
+        snap.children.forEach(collectImages);
+      };
+
+      collectImages(rootSnapshot);
+
+      logger.info(`Collected ${imageMap.size} images for sprite sheet`);
+
+      // 2. 스프라이트 시트 생성 (현재는 비활성화 - 개별 이미지가 더 정확함)
+      // if (imageMap.size > 0) {
+      //   try {
+      //     spriteSheet = await this.spriteService.createSpriteSheet(imageMap);
+      //     logger.info(`Created sprite sheet: ${spriteSheet.totalWidth}x${spriteSheet.totalHeight}`);
+      //   } catch (error) {
+      //     logger.error('Failed to create sprite sheet:', error);
+      //   }
+      // }
+
+      // 3. 이미지 데이터를 노드에 적용 (스프라이트 위치 정보 포함)
       const applyImageDataToNodes = (nodes: FigmaNodeData[], snapshot: HTMLNodeSnapshot) => {
         return nodes.map(node => {
           // 해당 노드의 스냅샷 찾기
@@ -227,32 +266,74 @@ export class HtmlProcessingService {
             }
             return null;
           };
-          
+
           const nodeSnapshot = findSnapshot(snapshot, node.id);
-          if (nodeSnapshot && nodeSnapshot.imageData) {
-            // 이미지 데이터를 노드 메타에 직접 추가
-            node.meta = {
-              ...node.meta,
-              snapshot: {
+          if (nodeSnapshot) {
+            node.meta = node.meta || {};
+
+            // 스프라이트 시트 위치 정보 찾기
+            const spriteInfo = spriteSheet?.images.find(img => img.id === node.id);
+
+            if (spriteInfo) {
+              node.meta.spriteInfo = {
+                x: spriteInfo.x,
+                y: spriteInfo.y,
+                width: spriteInfo.width,
+                height: spriteInfo.height,
+                originalUrl: spriteInfo.originalUrl
+              };
+
+              logger.debug('Applied sprite info to node', {
+                nodeId: node.id,
+                nodeName: node.name,
+                spritePosition: { x: spriteInfo.x, y: spriteInfo.y },
+                spriteSize: { width: spriteInfo.width, height: spriteInfo.height }
+              });
+            }
+
+            // 이미지 데이터 추가 (fallback용)
+            if (nodeSnapshot.imageData) {
+              // snapshot에 저장
+              node.meta.snapshot = {
                 imageData: nodeSnapshot.imageData,
                 isDownloadedImage: nodeSnapshot.isDownloadedImage,
                 tagName: nodeSnapshot.tagName,
                 attributes: nodeSnapshot.attributes
-              }
-            };
-            
-            logger.debug('Applied image data to node', {
-              nodeId: node.id,
-              nodeName: node.name,
-              hasImageData: !!nodeSnapshot.imageData,
-              isDownloadedImage: nodeSnapshot.isDownloadedImage
-            });
+              };
+              
+              // meta.imageData에도 직접 저장 (플러그인 호환성)
+              node.meta.imageData = nodeSnapshot.imageData;
+
+              logger.info('Applied image data to node', {
+                nodeId: node.id,
+                nodeName: node.name,
+                hasImageData: !!nodeSnapshot.imageData,
+                isDownloadedImage: nodeSnapshot.isDownloadedImage,
+                imageDataLength: nodeSnapshot.imageData?.length
+              });
+            } else {
+              logger.warn('No image data found for node', {
+                nodeId: node.id,
+                nodeName: node.name,
+                tagName: nodeSnapshot.tagName,
+                hasImageData: !!nodeSnapshot.imageData
+              });
+            }
+
+            // 정확한 이미지 정보 추가
+            if (nodeSnapshot.accurateImageInfo) {
+              node.meta.accurateImageInfo = nodeSnapshot.accurateImageInfo;
+              logger.debug('Applied accurate image info to node', {
+                nodeId: node.id,
+                accurateInfo: nodeSnapshot.accurateImageInfo
+              });
+            }
           }
-          
+
           return node;
         });
       };
-      
+
       conversion.nodes = applyImageDataToNodes(conversion.nodes, rootSnapshot);
     }
 
@@ -311,6 +392,7 @@ export class HtmlProcessingService {
         figmaTreeSummary: figmaTree
           ? { nodeCount: conversion.nodes.length, componentCount: components.length }
           : undefined,
+        spriteSheet,
       },
     };
   }

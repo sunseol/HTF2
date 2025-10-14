@@ -18,13 +18,18 @@ export class ImageDownloadService {
 
       logger.debug('Downloading image', { url });
 
-      // 이미지 다운로드
+      // 이미지 다운로드 (타임아웃은 AbortController로 처리)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         },
-        timeout: 10000 // 10초 타임아웃
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         return { success: false, error: `HTTP ${response.status}` };
@@ -52,8 +57,8 @@ export class ImageDownloadService {
         originalUrl: url
       };
     } catch (error) {
-      logger.warn('Image download failed', { url, error: error.message });
-      return { success: false, error: error.message };
+      logger.warn('Image download failed', { url, error: (error as Error).message });
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -68,6 +73,7 @@ export class ImageDownloadService {
         const src = node.attributes.src;
         if (src.startsWith('http')) {
           urls.push(src);
+          logger.debug('Found img src URL', { src, nodeId: node.id });
         }
       }
       

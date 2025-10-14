@@ -339,5 +339,5 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode> 
 1. 이미지 캐싱 시스템
 2. 다양한 이미지 포맷 지원
 3. 이미지 최적화
-
+Rendering URL via exact pipeline...
 이렇게 적용하면 이미지 미수집과 검은 프레임 문제를 줄일 수 있습니다.

@@ -35,8 +35,8 @@ const isLogoImage = (snapshot: HTMLNodeSnapshot): boolean => {
   const src = attributes.src?.toLowerCase() || '';
   const idString = (id || '').toLowerCase();
 
-  // Check class names
-  if (/logo|brand/.test(classString)) {
+  // Check class names (구글 로고 클래스 포함)
+  if (/logo|brand|lnxdpd|gb_f/.test(classString)) {
     return true;
   }
 
@@ -55,14 +55,21 @@ const isLogoImage = (snapshot: HTMLNodeSnapshot): boolean => {
     return true;
   }
 
-  // Check size - logos are typically medium-sized
+  // Check size and position - 구글 로고 특별 처리
   const width = snapshot.boundingBox.width;
   const height = snapshot.boundingBox.height;
+  const y = snapshot.boundingBox.y;
 
-  // Google 로고는 보통 중간 크기 (50-400px 너비)
+  // 구글 로고는 페이지 상단 중앙에 위치 (y < 300px)
+  if (y < 300) {
+    // 크기가 작아도 상단에 있으면 로고로 간주
+    if (width > 10 && height > 10 && width < 500 && height < 300) {
+      return true;
+    }
+  }
+
+  // 일반 로고 크기 체크 (50-400px 너비)
   if (width > 50 && width < 400 && height > 20 && height < 200) {
-    // Check if it's in the header or top area (페이지 상단 300px 이내)
-    const y = snapshot.boundingBox.y;
     if (y < 300) {
       return true;
     }
@@ -147,7 +154,7 @@ export const extractImageInfo = (snapshot: HTMLNodeSnapshot): ImageInfo | null =
     height,
     isLogo,
     isIcon,
-    isSvg: isOriginalSvg, // 원본 SVG만 true
+    isSvg: isSvg, // 모든 SVG 요소에 대해 true
     isDownloadedImage, // 다운로드된 이미지 플래그
     imageData: snapshot.imageData,
   };
@@ -212,14 +219,14 @@ export const enhanceImageNodes = (
     // Enhance meta information
     const enhancedMeta = {
       ...node.meta,
-      imageData: {
+      imageData: imageInfo.imageData, // 직접 문자열로 저장
+      imageInfo: {
         src: imageInfo.src,
         alt: imageInfo.alt,
         isLogo: imageInfo.isLogo,
         isIcon: imageInfo.isIcon,
         isSvg: imageInfo.isSvg,
         isDownloadedImage: imageInfo.isDownloadedImage,
-        imageData: imageInfo.imageData,
       },
     } as any;
 

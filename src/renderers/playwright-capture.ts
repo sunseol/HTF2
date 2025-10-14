@@ -9,7 +9,7 @@ import { ImageDownloadService } from '../services/image-download-service';
 
 const DEFAULT_WIDTH = 1920;
 const DEFAULT_HEIGHT = 1080;
-const DEFAULT_NAVIGATION_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT ?? 45000);
+const DEFAULT_NAVIGATION_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT ?? 15000);
 const IMAGE_LOAD_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_IMAGE_TIMEOUT ?? 5000);
 const SVG_IMAGE_LOAD_TIMEOUT_MS = Number(process.env.PLAYWRIGHT_SVG_IMAGE_TIMEOUT ?? 3000);
 
@@ -195,10 +195,92 @@ const waitForImages = async (page: Page): Promise<void> => {
   }
 };
 
-const captureImageElement = async (
+const getAccurateImageSize = async (element: ElementHandle<Element>): Promise<{width: number, height: number}> => {
+  return await element.evaluate((el: any) => {
+    const tagName = el.tagName.toLowerCase();
+    
+    if (tagName === 'img') {
+      // 실제 이미지 크기 확인
+      const naturalWidth = el.naturalWidth;
+      const naturalHeight = el.naturalHeight;
+      const displayWidth = el.offsetWidth;
+      const displayHeight = el.offsetHeight;
+      
+      // CSS로 크기가 지정된 경우
+      const computedStyle = window.getComputedStyle(el);
+      const cssWidth = computedStyle.width;
+      const cssHeight = computedStyle.height;
+      
+      // 최종 크기 결정
+      let finalWidth = displayWidth;
+      let finalHeight = displayHeight;
+      
+      // CSS 크기가 픽셀 단위로 지정된 경우
+      if (cssWidth && cssWidth !== 'auto' && cssWidth.includes('px')) {
+        finalWidth = parseFloat(cssWidth);
+      }
+      if (cssHeight && cssHeight !== 'auto' && cssHeight.includes('px')) {
+        finalHeight = parseFloat(cssHeight);
+      }
+      
+      // 비율 유지 확인
+      if (naturalWidth > 0 && naturalHeight > 0) {
+        const naturalRatio = naturalWidth / naturalHeight;
+        const displayRatio = finalWidth / finalHeight;
+        
+        // 비율이 크게 다른 경우 원본 비율로 조정
+        if (Math.abs(naturalRatio - displayRatio) > 0.1) {
+          if (finalWidth > finalHeight) {
+            finalHeight = finalWidth / naturalRatio;
+          } else {
+            finalWidth = finalHeight * naturalRatio;
+          }
+        }
+      }
+      
+      return { width: finalWidth, height: finalHeight };
+    }
+    
+    if (tagName === 'svg') {
+      // SVG 크기는 실제 렌더링 크기만 사용 (가장 정확)
+      const rect = el.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }
+    
+    // 기본 경우
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+};
+
+const getAccurateImagePosition = async (element: ElementHandle<Element>): Promise<{x: number, y: number}> => {
+  return await element.evaluate((el: any) => {
+    // 부모 요소의 스크롤 오프셋 고려
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    let parent = el.parentElement;
+    while (parent && parent !== document.body) {
+      offsetX += parent.scrollLeft || 0;
+      offsetY += parent.scrollTop || 0;
+      parent = parent.parentElement;
+    }
+    
+    const rect = el.getBoundingClientRect();
+    const bodyRect = document.body.getBoundingClientRect();
+    
+    // 정확한 위치 계산
+    const x = rect.left - bodyRect.left + offsetX;
+    const y = rect.top - bodyRect.top + offsetY;
+    
+    return { x, y };
+  });
+};
+
+const captureImageElementWithInfo = async (
   element: ElementHandle<Element>,
   elementId: string,
-): Promise<string | null> => {
+): Promise<AccurateImageInfo | null> => {
   try {
     // Check if element is visible and has dimensions
     const isVisible = await element.evaluate((el) => {
@@ -216,25 +298,70 @@ const captureImageElement = async (
       return null;
     }
 
-    const boundingBox = await element.boundingBox();
-    if (!boundingBox || boundingBox.width <= 0 || boundingBox.height <= 0) {
-      logger.debug('Skipping image with invalid bounding box', { elementId });
+    // 정확한 크기와 위치 계산
+    const [accurateSize, accuratePosition, elementInfo] = await Promise.all([
+      getAccurateImageSize(element),
+      getAccurateImagePosition(element),
+      element.evaluate((el: any) => ({
+        tagName: el.tagName.toLowerCase(),
+        src: el.src || el.href || null
+      }))
+    ]);
+
+    if (accurateSize.width <= 0 || accurateSize.height <= 0) {
+      logger.debug('Skipping image with invalid size', { elementId, size: accurateSize });
       return null;
     }
 
     // Try to capture the screenshot
     const screenshot = await element.screenshot({ type: 'png', omitBackground: false });
     const dataUrl = `data:image/png;base64,${screenshot.toString('base64')}`;
-    logger.debug('Successfully captured image', { elementId, size: screenshot.length });
-    return dataUrl;
+    
+    const imageInfo: AccurateImageInfo = {
+      elementId,
+      dataUrl,
+      width: accurateSize.width,
+      height: accurateSize.height,
+      x: accuratePosition.x,
+      y: accuratePosition.y,
+      tagName: elementInfo.tagName,
+      src: elementInfo.src
+    };
+
+    logger.debug('Successfully captured image with accurate info', { 
+      elementId, 
+      size: screenshot.length,
+      imageInfo
+    });
+    
+    return imageInfo;
   } catch (error: any) {
     logger.debug('Failed to capture image element screenshot', { elementId, error: error.message });
     return null;
   }
 };
 
+const captureImageElement = async (
+  element: ElementHandle<Element>,
+  elementId: string,
+): Promise<string | null> => {
+  const imageInfo = await captureImageElementWithInfo(element, elementId);
+  return imageInfo?.dataUrl || null;
+};
+
 export interface PlaywrightCaptureArtifact extends RenderedHtmlArtifact {
   rootSnapshot: HTMLNodeSnapshot;
+}
+
+export interface AccurateImageInfo {
+  elementId: string;
+  dataUrl: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  tagName: string;
+  src?: string;
 }
 
 class PlaywrightCaptureEngine {
@@ -265,94 +392,121 @@ class PlaywrightCaptureEngine {
     const start = performance.now();
     const width = options.width ?? DEFAULT_WIDTH;
     const height = options.height ?? DEFAULT_HEIGHT;
+    
+    logger.info('capturePage: Starting page capture', { width, height });
+    
     const browser = await this.getBrowser();
+    logger.info('capturePage: Browser obtained');
+    
     const navigationTimeout = options.navigationTimeoutMs ?? DEFAULT_NAVIGATION_TIMEOUT_MS;
+    logger.info('capturePage: Navigation timeout set', { navigationTimeout });
     const context = await browser.newContext({
       viewport: { width, height },
       ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? true,
+      permissions: [], // 모든 권한 비활성화
+      extraHTTPHeaders: {
+        'Permissions-Policy': 'camera=(), microphone=(), clipboard-write=(), display-capture=()'
+      }
     });
     context.setDefaultNavigationTimeout(navigationTimeout);
     context.setDefaultTimeout(navigationTimeout);
+    logger.info('capturePage: Context created and configured');
 
     let screenshotPath: string | undefined;
 
     try {
+      logger.info('capturePage: Calling pagePromiseFactory');
       const { page, description } = await pagePromiseFactory(context, navigationTimeout);
+      logger.info('capturePage: Page factory completed', { description });
       page.setDefaultNavigationTimeout(navigationTimeout);
       page.setDefaultTimeout(navigationTimeout);
+      
+      // Permissions Policy 강제 적용
+      await page.addInitScript(() => {
+        // Permissions Policy 메타 태그 추가
+        const meta = document.createElement('meta');
+        meta.httpEquiv = 'Permissions-Policy';
+        meta.content = 'camera=(), microphone=(), clipboard-write=(), display-capture=()';
+        document.head.appendChild(meta);
+      });
+      
       await page.waitForTimeout(50);
 
       const elementCount = await page.evaluate(() => document.querySelectorAll('*').length);
       const domSnapshot = await page.content();
 
-      // Wait for images to load
-      await waitForImages(page);
+      // Skip waiting for images to avoid hanging
+      logger.info('Skipping image wait to avoid hanging');
 
       // Assign temporary IDs to all image elements FIRST (in a single evaluation context)
-      await page.evaluate(() => {
-        const imageElements = document.querySelectorAll('img, svg');
-        imageElements.forEach((el: any, index: number) => {
-          if (!el.dataset.tmpId) {
-            el.dataset.tmpId = `img-${index}-${Math.random().toString(36).substr(2, 9)}`;
-          }
-        });
-        
-        // SVG 내부의 image 요소들도 처리
-        const svgImageElements = document.querySelectorAll('svg image');
-        svgImageElements.forEach((el: any, index: number) => {
-          if (!el.dataset.tmpId) {
-            el.dataset.tmpId = `svg-img-${index}-${Math.random().toString(36).substr(2, 9)}`;
-          }
-        });
-      });
-
-      // Capture screenshots of all images
-      const imageElements = await page.$$('img, svg');
-      const imageScreenshots = new Map<string, string>();
-
-      for (const element of imageElements) {
-        try {
-          const elementId = await element.evaluate((el: any) => el.dataset?.tmpId ?? null);
-          if (!elementId) {
-            continue;
-          }
-          const dataUrl = await captureImageElement(element, elementId);
-          if (dataUrl) {
-            imageScreenshots.set(elementId, dataUrl);
-          }
-        } catch (error) {
-          logger.warn('Could not capture element screenshot', { error });
-        }
-      }
-
-      // SVG 내부의 image 요소들도 캡처
-      const svgImageElements = await page.$$('svg image');
-      for (const element of svgImageElements) {
-        try {
-          const elementId = await element.evaluate((el: any) => el.dataset?.tmpId ?? null);
-          if (!elementId) {
-            continue;
-          }
-          
-          // SVG 내부 이미지를 캡처하려면 부모 SVG를 캡처해야 함
-          const parentSvg = await element.evaluateHandle((el: any) => el.closest('svg'));
-          if (parentSvg) {
-            const parentId = await parentSvg.evaluate((el: any) => el.dataset?.tmpId ?? null);
-            if (parentId) {
-              const dataUrl = await captureImageElement(parentSvg, elementId);
-              if (dataUrl) {
-                imageScreenshots.set(elementId, dataUrl);
-                logger.debug('Captured SVG internal image', { elementId, parentId });
-              }
+      logger.info('Assigning temporary IDs to image elements...');
+      try {
+        await page.evaluate(() => {
+          const imageElements = document.querySelectorAll('img, svg');
+          imageElements.forEach((el: any, index: number) => {
+            if (!el.dataset.tmpId) {
+              el.dataset.tmpId = `img-${index}-${Math.random().toString(36).substr(2, 9)}`;
             }
-          }
-        } catch (error) {
-          logger.warn('Could not capture SVG internal image', { error });
-        }
+          });
+
+          // SVG 내부의 image 요소들도 처리
+          const svgImageElements = document.querySelectorAll('svg image');
+          svgImageElements.forEach((el: any, index: number) => {
+            if (!el.dataset.tmpId) {
+              el.dataset.tmpId = `svg-img-${index}-${Math.random().toString(36).substr(2, 9)}`;
+            }
+          });
+        });
+        logger.info('Successfully assigned temporary IDs');
+      } catch (error) {
+        logger.warn('Failed to assign temporary IDs', { error });
       }
 
-      const rootSnapshotRaw = await page.evaluate(
-        ({ styleKeys }) => {
+      const imageScreenshots = new Map<string, string>();
+      const accurateImageInfo = new Map<string, AccurateImageInfo>();
+
+      // 이미지 스크린샷 캡처 (간소화)
+      logger.info('Capturing image screenshots...');
+      try {
+        const imageElements = await page.$$('img, svg');
+        logger.info(`Found ${imageElements.length} image elements to capture`);
+        
+        // 최대 5개만 캡처하여 성능 우선 (중요한 이미지만)
+        const maxImages = Math.min(imageElements.length, 5);
+        for (let i = 0; i < maxImages; i++) {
+          const element = imageElements[i];
+          try {
+            const tmpId = await element.evaluate((el: any) => el.dataset.tmpId);
+            if (tmpId) {
+              const screenshot = await Promise.race([
+                element.screenshot({ type: 'png', omitBackground: false }),
+                new Promise<Buffer>((_, reject) => 
+                  setTimeout(() => reject(new Error('Screenshot timeout')), 3000)
+                )
+              ]);
+              const dataUrl = `data:image/png;base64,${screenshot.toString('base64')}`;
+              imageScreenshots.set(tmpId, dataUrl);
+              logger.info('Captured image screenshot', { tmpId, size: screenshot.length, index: i + 1 });
+            }
+          } catch (error) {
+            logger.warn('Failed to capture image screenshot', { error: (error as Error).message, index: i + 1 });
+          }
+        }
+        
+        logger.info(`Captured ${imageScreenshots.size} image screenshots`);
+      } catch (error) {
+        logger.warn('Image screenshot capture failed', { error: (error as Error).message });
+      }
+
+      logger.info('Starting DOM snapshot extraction...');
+      logger.info('Progress: DOM extraction started');
+
+      // Set timeout for page.evaluate to avoid hanging
+      page.setDefaultTimeout(10000); // 10 seconds max
+
+      const rootSnapshotRaw = await Promise.race([
+        page.evaluate(
+          ({ styleKeys }) => {
           const keys = styleKeys as string[];
           let counter = 0;
 
@@ -418,48 +572,53 @@ class PlaywrightCaptureEngine {
             let actualHeight = rect.height;
 
             if (element.tagName && element.tagName.toLowerCase() === 'svg') {
-              const originalWidth = actualWidth;
-              const originalHeight = actualHeight;
-
-              // width/height 속성 직접 확인
-              const widthAttr = element.getAttribute('width');
-              const heightAttr = element.getAttribute('height');
-
-              if (widthAttr && heightAttr) {
-                const w = parseFloat(widthAttr);
-                const h = parseFloat(heightAttr);
-                if (!isNaN(w) && !isNaN(h) && w > actualWidth) {
-                  actualWidth = w;
-                  actualHeight = h;
-                }
+              // SVG 크기 계산 개선
+              const computedStyle = window.getComputedStyle(element);
+              const cssWidth = computedStyle.width;
+              const cssHeight = computedStyle.height;
+              
+              // SVG의 원본 크기 속성 확인
+              const svgWidth = element.getAttribute('width');
+              const svgHeight = element.getAttribute('height');
+              const viewBox = element.getAttribute('viewBox');
+              
+              // CSS 크기가 명시적으로 설정된 경우 우선 사용
+              if (cssWidth && cssWidth !== 'auto' && cssWidth.includes('px')) {
+                actualWidth = parseFloat(cssWidth);
+              } else if (svgWidth && !svgWidth.includes('%')) {
+                actualWidth = parseFloat(svgWidth);
               }
-
-              // viewBox 속성 확인
-              const viewBoxAttr = element.getAttribute('viewBox');
-              if (viewBoxAttr) {
-                const viewBoxParts = viewBoxAttr.split(/\s+/);
-                if (viewBoxParts.length === 4) {
-                  const vbWidth = parseFloat(viewBoxParts[2]);
-                  const vbHeight = parseFloat(viewBoxParts[3]);
-                  if (!isNaN(vbWidth) && !isNaN(vbHeight) && vbWidth > actualWidth) {
-                    actualWidth = vbWidth;
-                    actualHeight = vbHeight;
+              
+              if (cssHeight && cssHeight !== 'auto' && cssHeight.includes('px')) {
+                actualHeight = parseFloat(cssHeight);
+              } else if (svgHeight && !svgHeight.includes('%')) {
+                actualHeight = parseFloat(svgHeight);
+              }
+              
+              // viewBox가 있는 경우 비율 계산
+              if (viewBox && actualWidth > 0 && actualHeight > 0) {
+                const viewBoxValues = viewBox.split(/[\s,]+/).map((v: string) => parseFloat(v));
+                if (viewBoxValues.length >= 4) {
+                  const [, , vbWidth, vbHeight] = viewBoxValues;
+                  if (vbWidth > 0 && vbHeight > 0) {
+                    const aspectRatio = vbWidth / vbHeight;
+                    const currentAspectRatio = actualWidth / actualHeight;
+                    
+                    // 비율이 맞지 않으면 높이를 기준으로 너비 조정
+                    if (Math.abs(currentAspectRatio - aspectRatio) > 0.1) {
+                      actualWidth = actualHeight * aspectRatio;
+                    }
                   }
                 }
               }
-
-              // 크기가 변경된 경우 로깅
-              if (actualWidth !== originalWidth || actualHeight !== originalHeight) {
-                console.log('[Playwright] SVG size adjusted:', {
-                  id: id,
-                  original: { width: originalWidth, height: originalHeight },
-                  adjusted: { width: actualWidth, height: actualHeight },
-                  position: { x: rect.left, y: rect.top },
-                  viewBox: viewBoxAttr,
-                  widthAttr: widthAttr,
-                  heightAttr: heightAttr
-                });
-              }
+              
+              // 최소 크기 보장 (너무 작으면 기본값 사용)
+              if (actualWidth < 1) actualWidth = rect.width || 20;
+              if (actualHeight < 1) actualHeight = rect.height || 20;
+              
+              // 최종 크기는 계산된 값과 실제 렌더링 크기 중 더 큰 값 사용
+              actualWidth = Math.max(actualWidth, rect.width);
+              actualHeight = Math.max(actualHeight, rect.height);
             }
 
             // Normalize coordinates relative to body element
@@ -473,6 +632,7 @@ class PlaywrightCaptureEngine {
 
             // Get the temporary ID we assigned to image elements
             let imageData: string | undefined;
+            let accurateImageInfo: any = undefined;
             const tagName = element.tagName.toLowerCase();
 
             if (tagName === 'img' || tagName === 'svg') {
@@ -481,6 +641,19 @@ class PlaywrightCaptureEngine {
               if (tmpId) {
                 // Store the ID so we can match it later
                 attributes['data-tmp-id'] = tmpId;
+                
+                // 정확한 이미지 정보 추가
+                const accurateInfo = (window as any).accurateImageInfo?.get(tmpId);
+                if (accurateInfo) {
+                  accurateImageInfo = {
+                    width: accurateInfo.width,
+                    height: accurateInfo.height,
+                    x: accurateInfo.x,
+                    y: accurateInfo.y,
+                    tagName: accurateInfo.tagName,
+                    src: accurateInfo.src
+                  };
+                }
               }
             }
 
@@ -542,6 +715,10 @@ class PlaywrightCaptureEngine {
               result.imageData = imageData;
             }
 
+            if (accurateImageInfo) {
+              result.accurateImageInfo = accurateImageInfo;
+            }
+
             return result;
           };
 
@@ -567,15 +744,29 @@ class PlaywrightCaptureEngine {
           return result;
         },
         { styleKeys: STYLE_PROPERTIES },
-      );
+      ),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('DOM snapshot extraction timeout')), 3000)
+      )
+      ]);
 
       const rootSnapshot = rootSnapshotRaw as unknown as HTMLNodeSnapshot;
+      logger.info('Progress: DOM extraction completed');
 
       // 이미지 다운로드 실행
       logger.info('Starting image download process...');
-      const downloadedImages = await this.imageDownloadService.downloadImagesFromSnapshot(rootSnapshot);
+      logger.info('Progress: Image download started');
+      const downloadedImages = await Promise.race([
+        this.imageDownloadService.downloadImagesFromSnapshot(rootSnapshot),
+        new Promise<Map<string, any>>((_, reject) => 
+          setTimeout(() => reject(new Error('Image download timeout')), 5000)
+        )
+      ]);
+      logger.info('Progress: Image download completed');
+      logger.info(`Downloaded ${downloadedImages.size} images`);
       
       // 다운로드된 이미지를 스냅샷에 적용
+      let appliedCount = 0;
       const applyDownloadedImages = (snapshot: HTMLNodeSnapshot) => {
         // img 태그 처리
         if (snapshot.tagName === 'img' && snapshot.attributes?.src) {
@@ -585,7 +776,10 @@ class PlaywrightCaptureEngine {
           if (downloadedImage?.success && downloadedImage.data) {
             snapshot.imageData = downloadedImage.data;
             snapshot.isDownloadedImage = true;
-            logger.debug('Applied downloaded image', { src, format: downloadedImage.format });
+            appliedCount++;
+            logger.info('Applied downloaded image', { src: src.substring(0, 50), format: downloadedImage.format, nodeId: snapshot.id });
+          } else {
+            logger.warn('Failed to apply downloaded image', { src: src.substring(0, 50), success: downloadedImage?.success, nodeId: snapshot.id });
           }
         }
         
@@ -634,40 +828,24 @@ class PlaywrightCaptureEngine {
       };
 
       applyDownloadedImages(rootSnapshot);
+      logger.info(`Applied ${appliedCount} downloaded images to snapshots`);
 
       // 기존 이미지 스크린샷 적용 (원본 SVG만)
+      let appliedScreenshots = 0;
       const applyImageData = (snapshot: HTMLNodeSnapshot) => {
         const tmpId = snapshot.attributes['data-tmp-id'];
         if (tmpId && imageScreenshots.has(tmpId)) {
           const screenshotData = imageScreenshots.get(tmpId);
           if (screenshotData) {
-            // SVG 스크린샷을 PNG로 변환
-            if (snapshot.tagName === 'svg' && screenshotData.startsWith('data:image/svg')) {
-              // SVG 스크린샷을 PNG로 변환하는 로직
-              try {
-                // SVG 데이터 추출
-                const svgData = screenshotData.split(',')[1];
-                const decodedSvg = Buffer.from(svgData, 'base64').toString('utf-8');
-                
-                // 간단한 SVG to PNG 변환 (실제로는 더 복잡한 로직 필요)
-                // 여기서는 스크린샷 데이터를 그대로 사용
-                snapshot.imageData = screenshotData;
-                snapshot.isDownloadedImage = false;
-                
-                logger.debug('Applied SVG screenshot', { 
-                  nodeId: snapshot.id, 
-                  tmpId,
-                  svgLength: decodedSvg.length 
-                });
-              } catch (error) {
-                logger.warn('SVG screenshot processing failed', { error: error.message });
-                snapshot.imageData = screenshotData;
-                snapshot.isDownloadedImage = false;
-              }
-            } else {
-              snapshot.imageData = screenshotData;
-              snapshot.isDownloadedImage = false;
-            }
+            snapshot.imageData = screenshotData;
+            snapshot.isDownloadedImage = false;
+            appliedScreenshots++;
+            logger.info('Applied image screenshot', { 
+              nodeId: snapshot.id, 
+              tmpId,
+              tagName: snapshot.tagName,
+              dataLength: screenshotData.length
+            });
           }
           // Clean up the temporary ID
           delete snapshot.attributes['data-tmp-id'];
@@ -714,6 +892,7 @@ class PlaywrightCaptureEngine {
         snapshot.children.forEach(applyImageData);
       };
       applyImageData(rootSnapshot);
+      logger.info(`Applied ${appliedScreenshots} image screenshots to snapshots`);
 
       logger.info(`Captured ${imageScreenshots.size} SVG screenshots and downloaded ${downloadedImages.size} images`);
 
@@ -746,6 +925,15 @@ class PlaywrightCaptureEngine {
         elementCount,
         metadata,
       };
+    } catch (error) {
+      logger.error('Playwright capture failed', { error });
+      
+      // 타임아웃 에러인 경우 더 구체적인 메시지 제공
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error(`Page rendering timeout: ${error.message}`);
+      }
+      
+      throw error;
     } finally {
       await context.close();
     }
@@ -765,11 +953,21 @@ class PlaywrightCaptureEngine {
 
   public async captureUrl(url: string, options: RenderHtmlOptions = {}): Promise<PlaywrightCaptureArtifact> {
     const waitUntil = options.waitUntil ?? 'networkidle';
+    logger.info('captureUrl: Starting URL capture', { url, waitUntil });
+    
     return this.capturePage(
       async (context, navigationTimeout) => {
+        logger.info('captureUrl: Creating new page');
         const page = await context.newPage();
+        
+        logger.info('captureUrl: Navigating to URL', { url, waitUntil, timeout: navigationTimeout });
         await page.goto(url, { waitUntil, timeout: navigationTimeout });
-        return { page, description: { source: 'url', url, title: await page.title() } };
+        logger.info('captureUrl: Navigation completed successfully');
+        
+        const title = await page.title();
+        logger.info('captureUrl: Page title retrieved', { title });
+        
+        return { page, description: { source: 'url', url, title } };
       },
       options,
     );

@@ -24,6 +24,14 @@ export interface HTMLNodeSnapshot {
   };
   imageData?: string; // base64 encoded image data
   isDownloadedImage?: boolean; // 다운로드된 이미지인지 구분
+  accurateImageInfo?: {
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+    tagName: string;
+    src?: string;
+  };
   children: HTMLNodeSnapshot[];
 }
 

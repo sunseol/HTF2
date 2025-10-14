@@ -418,6 +418,7 @@
         return window.localStorage.getItem('api-url');
       } catch (err) {
         storageAvailable = false;
+        // Figma 플러그인 샌드박스에서는 localStorage 접근이 제한됨
         return cachedApiUrl;
       }
     }
@@ -431,6 +432,7 @@
         window.localStorage.setItem('api-url', value);
       } catch (err) {
         storageAvailable = false;
+        // Figma 플러그인 샌드박스에서는 localStorage 접근이 제한됨
       }
     }
 
@@ -440,9 +442,11 @@
       window.localStorage.removeItem(testKey);
     } catch (err) {
       storageAvailable = false;
-      console.warn('Local storage unavailable, falling back to in-memory API URL cache.', err);
+      // Figma 플러그인 샌드박스에서는 localStorage가 비활성화되어 있음 (정상 동작)
+      console.info('Local storage unavailable in Figma plugin sandbox, using in-memory cache.');
     }
-
+
+
     const statusDiv = document.getElementById('status');
     const statsDiv = document.getElementById('stats');
 
