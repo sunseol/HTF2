@@ -181,13 +181,17 @@ async function createFigmaNodes(nodes: FigmaNodeData[]): Promise<void> {
   const containerWidth = maxX - minX;
   const containerHeight = maxY - minY;
 
-  // Create a root container frame
+  // Create a root container frame - ensure it's large enough to contain all content
   const rootContainer = figma.createFrame();
   rootContainer.name = 'HTML Import';
-  rootContainer.resize(Math.max(containerWidth, 100), Math.max(containerHeight, 100));
+  // Add padding to ensure all content fits comfortably
+  const finalWidth = Math.max(containerWidth + 40, 1920);
+  const finalHeight = Math.max(containerHeight + 40, 100);
+  rootContainer.resize(finalWidth, finalHeight);
   rootContainer.x = 0;
   rootContainer.y = 0;
   rootContainer.fills = []; // Transparent background
+  rootContainer.clipsContent = false; // Don't clip content
   figma.currentPage.appendChild(rootContainer);
 
   // Sort nodes by dependency (parents first)
@@ -195,7 +199,7 @@ async function createFigmaNodes(nodes: FigmaNodeData[]): Promise<void> {
 
   // Create nodes in order
   for (const nodeData of sortedNodes) {
-    await createNode(nodeData, rootContainer, minX, minY);
+    await createNode(nodeData, rootContainer, minX - 20, minY - 20); // Add 20px offset for padding
   }
 
   // Focus on the root container
@@ -278,8 +282,8 @@ function applyPosition(node: SceneNode, nodeData: FigmaNodeData, parentData?: Fi
   const isAbsolute = nodeData.layoutPositioning === 'ABSOLUTE';
   const layoutNode = node as SceneNode & LayoutMixin;
 
-  // For absolute positioned elements, always set position
-  if (isAbsolute && 'layoutPositioning' in layoutNode) {
+  // Only set ABSOLUTE positioning if parent has auto layout (layoutMode !== 'NONE')
+  if (isAbsolute && parentLayoutMode && 'layoutPositioning' in layoutNode) {
     layoutNode.layoutPositioning = 'ABSOLUTE';
   }
 
@@ -303,26 +307,52 @@ function applyPosition(node: SceneNode, nodeData: FigmaNodeData, parentData?: Fi
     offsetY = rootOffsetY;
   }
 
+  // 정확한 위치 계산 - 반올림으로 픽셀 단위 정렬
+  const finalX = Math.round(nodeData.boundingBox.x - offsetX);
+  const finalY = Math.round(nodeData.boundingBox.y - offsetY);
+
   // Set position for:
   // 1. Nodes without auto layout parents
   // 2. Absolutely positioned nodes
-  layoutNode.x = nodeData.boundingBox.x - offsetX;
-  layoutNode.y = nodeData.boundingBox.y - offsetY;
+  layoutNode.x = finalX;
+  layoutNode.y = finalY;
+
+  console.log('Applied position:', {
+    id: nodeData.id,
+    name: nodeData.name,
+    type: nodeData.type,
+    originalX: nodeData.boundingBox.x,
+    originalY: nodeData.boundingBox.y,
+    finalX,
+    finalY,
+    offsetX,
+    offsetY
+  });
 }
 
 function applyLayoutParticipation(node: SceneNode, nodeData: FigmaNodeData, parentData?: FigmaNodeData) {
   const layoutNode = node as SceneNode & LayoutMixin;
 
+  // If parent doesn't exist or has no auto layout, set to AUTO and return early
+  if (!parentData || parentData.layoutMode === 'NONE') {
+    if ('layoutPositioning' in layoutNode) {
+      layoutNode.layoutPositioning = 'AUTO';
+    }
+    return;
+  }
+
+  // Parent has auto layout - now we can set ABSOLUTE if needed
   if ('layoutPositioning' in layoutNode) {
     layoutNode.layoutPositioning = nodeData.layoutPositioning === 'ABSOLUTE' ? 'ABSOLUTE' : 'AUTO';
   }
 
-  if (!parentData || parentData.layoutMode === 'NONE') {
-    return;
-  }
-
   if (nodeData.layoutAlign) {
-    layoutNode.layoutAlign = nodeData.layoutAlign;
+    // Skip deprecated CENTER and MAX values - let Figma use its default behavior
+    const alignValue = nodeData.layoutAlign;
+    if (alignValue === 'MIN' || alignValue === 'STRETCH') {
+      layoutNode.layoutAlign = alignValue;
+    }
+    // Don't set CENTER or MAX as they're deprecated
   }
 
   if (nodeData.layoutGrow !== undefined) {
@@ -346,9 +376,20 @@ function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = fi
     Math.max(nodeData.boundingBox.height, 1)
   );
 
-  // Fills
+  // Fills - prevent large black frames
   if (nodeData.fills && nodeData.fills.length > 0) {
-    frame.fills = convertFills(nodeData.fills);
+    const fills = convertFills(nodeData.fills);
+    // Filter out solid black fills on large frames (likely body/html elements)
+    const filteredFills = fills.filter(fill => {
+      if (fill.type === 'SOLID' && nodeData.boundingBox.width > 1000 && nodeData.boundingBox.height > 500) {
+        const color = fill.color;
+        // Check if it's black or very dark
+        const isBlack = color.r < 0.1 && color.g < 0.1 && color.b < 0.1;
+        return !isBlack;
+      }
+      return true;
+    });
+    frame.fills = filteredFills.length > 0 ? filteredFills : [];
   }
 
   // Strokes
@@ -434,101 +475,201 @@ function createFrameNode(nodeData: FigmaNodeData): FrameNode {  const frame = fi
     frame.clipsContent = nodeData.clipsContent;
   }
 
-  if (nodeData.layoutPositioning === 'ABSOLUTE' && 'layoutPositioning' in frame) {
-    frame.layoutPositioning = 'ABSOLUTE';
-  }
+  // Only set ABSOLUTE positioning if not in an auto layout parent
+  // This will be handled in applyPosition instead
 
   return frame;
 }
 
-async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode> {
+async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode | FrameNode> {
   const rect = figma.createRectangle();
 
+  // 정확한 원본 크기 사용 - 강제 변경하지 않음
+  const width = Math.max(nodeData.boundingBox.width, 1);
+  const height = Math.max(nodeData.boundingBox.height, 1);
+
   // Size
-  rect.resize(
-    Math.max(nodeData.boundingBox.width, 1),
-    Math.max(nodeData.boundingBox.height, 1)
-  );
+  rect.resize(width, height);
+
+  const isLogoForDebug = nodeData.meta?.imageData?.isLogo;
+  const isIconForDebug = nodeData.meta?.imageData?.isIcon;
+
+  console.log('Image node size:', {
+    id: nodeData.id,
+    name: nodeData.name,
+    width,
+    height,
+    isLogo: isLogoForDebug,
+    isIcon: isIconForDebug,
+    boundingBox: nodeData.boundingBox
+  });
 
   const imageSrc = nodeData.meta?.attributes?.src;
-  const imageData = nodeData.meta?.imageData;
+
+  // imageData 추출 로직 - 여러 경로 시도
+  let imageData: string | undefined;
+
+  // 1. meta.imageData가 객체인 경우 (ImageInfo 래핑)
+  if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'object') {
+    const imgObj = nodeData.meta.imageData as any;
+    imageData = imgObj.imageData; // ImageInfo.imageData 필드
+  }
+  // 2. meta.imageData가 직접 문자열인 경우
+  else if (nodeData.meta?.imageData && typeof nodeData.meta.imageData === 'string') {
+    imageData = nodeData.meta.imageData;
+  }
+
+  // 3. snapshot에서 직접 가져오기
+  if (!imageData && nodeData.meta?.snapshot?.imageData) {
+    imageData = nodeData.meta.snapshot.imageData;
+  }
+
   const alt = nodeData.meta?.attributes?.alt;
 
+  // 이미지 타입 확인
+  const isSvg = nodeData.meta?.imageData?.isSvg;
+  const isDownloadedImage = nodeData.meta?.imageData?.isDownloadedImage;
+  
   console.log('Creating image node:', {
     id: nodeData.id,
-    src: imageSrc,
+    name: nodeData.name,
+    tagName: nodeData.meta?.htmlTag,
+    src: imageSrc?.substring(0, 50),
+    isSvg,
+    isDownloadedImage,
     hasImageData: !!imageData,
     imageDataType: typeof imageData,
     imageDataLength: typeof imageData === 'string' ? imageData.length : 0,
-    imageDataPrefix: typeof imageData === 'string' ? imageData.substring(0, 50) : 'N/A',
+    imageDataPrefix: typeof imageData === 'string' ? imageData.substring(0, 80) : JSON.stringify(imageData).substring(0, 200),
+    metaKeys: nodeData.meta ? Object.keys(nodeData.meta) : [],
   });
 
   // Try to use actual image data if available
-  if (imageData) {
+  if (imageData && typeof imageData === 'string' && imageData.length > 0) {
     try {
-      // Check if it's an SVG data URL
-      const isSvg = imageData.startsWith('data:image/svg+xml');
+      // Base64 데이터 추출
+      let base64Data = imageData;
 
-      if (isSvg) {
-        // For SVG, try to convert it to PNG first
-        // Figma doesn't support SVG fills directly, so we need to rasterize
-        try {
-          const bytes = decodeBase64ToUint8Array(imageData);
-          const image = figma.createImage(bytes);
-
-          rect.fills = [{
-            type: 'IMAGE',
-            imageHash: image.hash,
-            scaleMode: 'FIT',
-          }];
-
-          rect.name = alt || 'SVG Image';
-        } catch (svgError) {
-          // SVG conversion failed, use placeholder
-          console.warn('Could not convert SVG to image:', svgError);
-          rect.fills = [{
-            type: 'SOLID',
-            color: { r: 0.95, g: 0.95, b: 0.95 },
-          }];
-          rect.name = alt || 'SVG (conversion failed)';
-        }
-      } else {
-        // Regular image (PNG/JPG)
-        const bytes = decodeBase64ToUint8Array(imageData);
-        const image = figma.createImage(bytes);
-
-        // Use image as fill
-        rect.fills = [{
-          type: 'IMAGE',
-          imageHash: image.hash,
-          scaleMode: 'FIT',
-        }];
-
-        // Set name
-        if (alt) {
-          rect.name = alt;
-        } else if (imageSrc) {
-          const srcName = imageSrc.substring(imageSrc.lastIndexOf('/') + 1);
-          rect.name = srcName.length > 30 ? srcName.substring(0, 30) : srcName;
-        } else {
-          rect.name = 'Image';
-        }
+      // data:image/png;base64, 형식에서 base64 부분만 추출
+      if (imageData.includes('base64,')) {
+        base64Data = imageData.split('base64,')[1];
+      } else if (imageData.includes(',')) {
+        base64Data = imageData.split(',')[1];
       }
-    } catch (error) {
-      console.error('Failed to create image from data:', error);
-      // Fallback to placeholder
-      rect.fills = [{
-        type: 'SOLID',
-        color: { r: 0.9, g: 0.9, b: 0.9 },
-      }];
-      rect.name = alt || 'Image (load failed)';
 
-      // Add warning text overlay
-      rect.strokes = [{
-        type: 'SOLID',
-        color: { r: 0.9, g: 0.5, b: 0.1 },
+      // 공백 제거
+      base64Data = base64Data.trim().replace(/\s/g, '');
+
+      console.log('Processing image data:', {
+        id: nodeData.id,
+        name: nodeData.name,
+        tagName: nodeData.meta?.htmlTag,
+        originalLength: imageData.length,
+        base64Length: base64Data.length,
+        isSvg,
+        isDownloadedImage,
+        dataPrefix: imageData.substring(0, 50),
+        base64Prefix: base64Data.substring(0, 50)
+      });
+
+      // Base64 문자열 유효성 검사
+      if (base64Data.length === 0) {
+        throw new Error('Empty base64 data after extraction');
+      }
+
+      // 최소 길이 체크 (PNG 헤더 최소 크기)
+      if (base64Data.length < 100) {
+        throw new Error(`Base64 data too short: ${base64Data.length} chars`);
+      }
+
+      const bytes = decodeBase64ToUint8Array(base64Data);
+
+      // 바이트 배열 유효성 검사
+      if (bytes.length === 0) {
+        throw new Error('Decoded bytes array is empty');
+      }
+
+      console.log('Decoded bytes:', {
+        id: nodeData.id,
+        byteLength: bytes.length,
+        firstBytes: Array.from(bytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
+
+      const image = figma.createImage(bytes);
+
+      rect.fills = [{
+        type: 'IMAGE',
+        imageHash: image.hash,
+        scaleMode: 'FIT',
       }];
-      rect.strokeWeight = 2;
+
+      // Set name based on image type
+      if (isSvg) {
+        rect.name = alt || 'SVG Image';
+        console.log('✓ SVG image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
+      } else if (isDownloadedImage) {
+        rect.name = alt || 'Downloaded Image';
+        console.log('✓ Downloaded image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
+      } else {
+        rect.name = alt || imageSrc?.split('/').pop()?.substring(0, 30) || 'Image';
+        console.log('✓ Image created:', nodeData.id, 'hash:', image.hash, 'size:', bytes.length);
+      }
+    } catch (error: any) {
+      console.error('Failed to create image from data:', {
+        error: error.message,
+        stack: error.stack,
+        imageDataLength: typeof imageData === 'string' ? imageData.length : 0,
+        imageDataStart: typeof imageData === 'string' ? imageData.substring(0, 100) : 'not a string',
+        isSvg,
+        isDownloadedImage
+      });
+      
+      // SVG 실패 시 텍스트로 대체
+      if (isSvg) {
+        rect.fills = [{
+          type: 'SOLID',
+          color: { r: 0.95, g: 0.95, b: 0.95 },
+        }];
+        
+        // SVG 텍스트 추가
+        const text = figma.createText();
+        await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+        text.characters = alt || 'SVG';
+        text.fontSize = Math.min(width / 6, height / 2, 16); // 크기에 맞춰 폰트 크기 조정
+        text.fills = [{
+          type: 'SOLID',
+          color: { r: 0.3, g: 0.3, b: 0.3 }
+        }];
+        
+        // 텍스트 중앙 정렬
+        text.x = width / 2 - text.width / 2;
+        text.y = height / 2 - text.height / 2;
+        
+        // RectangleNode에는 appendChild가 없으므로 Frame으로 변경
+        const frame = figma.createFrame();
+        frame.resize(width, height);
+        frame.fills = rect.fills;
+        frame.appendChild(text);
+        frame.name = alt || 'SVG (text fallback)';
+        
+        console.log('SVG fallback to text:', nodeData.id);
+        
+        return frame;
+      } else {
+        // 일반 이미지 실패 시 플레이스홀더
+        rect.fills = [{
+          type: 'SOLID',
+          color: { r: 0.9, g: 0.9, b: 0.9 },
+        }];
+        rect.name = alt || 'Image (load failed)';
+
+        // Add warning text overlay
+        rect.strokes = [{
+          type: 'SOLID',
+          color: { r: 0.9, g: 0.5, b: 0.1 },
+        }];
+        rect.strokeWeight = 2;
+      }
     }
   } else if (imageSrc) {
     // No image data available - create placeholder
@@ -564,12 +705,12 @@ async function createImageNode(nodeData: FigmaNodeData): Promise<RectangleNode> 
   }
 
   // Check if it's a logo or icon from meta
-  const isLogo = nodeData.meta?.imageData?.isLogo || nodeData.meta?.classes?.some((c: string) => /logo/i.test(c));
-  const isIcon = nodeData.meta?.imageData?.isIcon || nodeData.meta?.classes?.some((c: string) => /icon/i.test(c));
+  const isLogoForCorner = nodeData.meta?.imageData?.isLogo || nodeData.meta?.classes?.some((c: string) => /logo/i.test(c));
+  const isIconForCorner = nodeData.meta?.imageData?.isIcon || nodeData.meta?.classes?.some((c: string) => /icon/i.test(c));
 
-  if (isIcon) {
+  if (isIconForCorner) {
     rect.cornerRadius = nodeData.boundingBox.width / 4;
-  } else if (isLogo) {
+  } else if (isLogoForCorner) {
     rect.cornerRadius = 4;
   }
 

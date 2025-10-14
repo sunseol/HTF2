@@ -23,6 +23,7 @@ export interface HTMLNodeSnapshot {
     isGridContainer: boolean;
   };
   imageData?: string; // base64 encoded image data
+  isDownloadedImage?: boolean; // 다운로드된 이미지인지 구분
   children: HTMLNodeSnapshot[];
 }
 

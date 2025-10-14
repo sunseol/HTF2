@@ -11,6 +11,7 @@ export interface ImageInfo {
   isLogo?: boolean;
   isIcon?: boolean;
   isSvg?: boolean;
+  isDownloadedImage?: boolean; // 다운로드된 이미지인지 구분
   imageData?: string; // base64 encoded image data
 }
 
@@ -28,10 +29,11 @@ export interface ProcessedImage {
  * Detect if an image is a logo based on various heuristics
  */
 const isLogoImage = (snapshot: HTMLNodeSnapshot): boolean => {
-  const { attributes, classes, styles } = snapshot;
+  const { attributes, classes, styles, id } = snapshot;
   const classString = classes.join(' ').toLowerCase();
   const alt = attributes.alt?.toLowerCase() || '';
   const src = attributes.src?.toLowerCase() || '';
+  const idString = (id || '').toLowerCase();
 
   // Check class names
   if (/logo|brand/.test(classString)) {
@@ -39,7 +41,7 @@ const isLogoImage = (snapshot: HTMLNodeSnapshot): boolean => {
   }
 
   // Check alt text
-  if (/logo|brand/.test(alt)) {
+  if (/logo|brand|google/.test(alt)) {
     return true;
   }
 
@@ -48,13 +50,20 @@ const isLogoImage = (snapshot: HTMLNodeSnapshot): boolean => {
     return true;
   }
 
+  // Check ID
+  if (/logo|brand/.test(idString)) {
+    return true;
+  }
+
   // Check size - logos are typically medium-sized
-  const width = parseFloat(styles.width ?? '0');
-  const height = parseFloat(styles.height ?? '0');
-  if (width > 50 && width < 300 && height > 20 && height < 150) {
-    // Check if it's in the header or top area
+  const width = snapshot.boundingBox.width;
+  const height = snapshot.boundingBox.height;
+
+  // Google 로고는 보통 중간 크기 (50-400px 너비)
+  if (width > 50 && width < 400 && height > 20 && height < 200) {
+    // Check if it's in the header or top area (페이지 상단 300px 이내)
     const y = snapshot.boundingBox.y;
-    if (y < 100) {
+    if (y < 300) {
       return true;
     }
   }
@@ -107,16 +116,40 @@ export const extractImageInfo = (snapshot: HTMLNodeSnapshot): ImageInfo | null =
   const isIcon = isIconImage(snapshot);
   const isSvg = snapshot.tagName === 'svg';
 
+  // 다운로드된 이미지인지 확인
+  const isDownloadedImage = !!snapshot.imageData && snapshot.imageData.startsWith('data:image/');
+
+  // 원본 SVG인지 확인 (다운로드된 이미지가 아닌 경우)
+  const isOriginalSvg = isSvg && !isDownloadedImage;
+
+  // SVG 내부에 image 요소가 있는지 확인
+  const hasSvgImage = isSvg && snapshot.children.some(child => child.tagName === 'image');
+
+  // 로고인 경우 크기 로깅
+  if (isLogo) {
+    logger.debug('Logo detected with size:', {
+      nodeId: snapshot.id,
+      src: src?.substring(0, 50),
+      alt,
+      width,
+      height,
+      boundingBox: snapshot.boundingBox,
+      hasImageData: !!snapshot.imageData,
+      imageDataLength: snapshot.imageData?.length
+    });
+  }
+
   return {
     nodeId: snapshot.id,
-    src,
+    src: src || (isOriginalSvg ? 'svg-element' : '') || (hasSvgImage ? 'svg-with-image' : ''),
     alt,
     width,
     height,
     isLogo,
     isIcon,
-    isSvg,
-    imageData: snapshot.imageData, // Pass through base64 image data from Playwright
+    isSvg: isOriginalSvg, // 원본 SVG만 true
+    isDownloadedImage, // 다운로드된 이미지 플래그
+    imageData: snapshot.imageData,
   };
 };
 
@@ -130,14 +163,22 @@ export const processImagesInTree = (rootSnapshot: HTMLNodeSnapshot): ImageInfo[]
     const imageInfo = extractImageInfo(snapshot);
     if (imageInfo) {
       images.push(imageInfo);
-      logger.debug('Found image:', {
-        src: imageInfo.src?.substring(0, 50),
+
+      // 모든 이미지 상세 정보 로깅
+      logger.info('🖼️  Image found:', {
+        nodeId: imageInfo.nodeId,
+        tagName: snapshot.tagName,
+        src: imageInfo.src?.substring(0, 80),
         alt: imageInfo.alt,
         width: imageInfo.width,
         height: imageInfo.height,
+        position: { x: snapshot.boundingBox.x, y: snapshot.boundingBox.y },
         isLogo: imageInfo.isLogo,
         isIcon: imageInfo.isIcon,
         hasImageData: !!imageInfo.imageData,
+        imageDataLength: imageInfo.imageData?.length || 0,
+        classes: snapshot.classes.join(' '),
+        id: snapshot.id
       });
     }
 
@@ -177,6 +218,8 @@ export const enhanceImageNodes = (
         isLogo: imageInfo.isLogo,
         isIcon: imageInfo.isIcon,
         isSvg: imageInfo.isSvg,
+        isDownloadedImage: imageInfo.isDownloadedImage,
+        imageData: imageInfo.imageData,
       },
     } as any;
 
@@ -184,29 +227,21 @@ export const enhanceImageNodes = (
     let enhancedNode = { ...node, meta: enhancedMeta };
 
     if (imageInfo.isLogo) {
-      // Logos should maintain aspect ratio
-      const aspectRatio = imageInfo.width / imageInfo.height;
-      if (aspectRatio > 0) {
-        enhancedNode.boundingBox = {
-          ...enhancedNode.boundingBox,
-          width: imageInfo.width,
-          height: imageInfo.height,
-        };
-      }
+      // Logos maintain their original size from the browser
+      logger.debug('Logo detected, keeping original size', {
+        nodeId: imageInfo.nodeId,
+        width: imageInfo.width,
+        height: imageInfo.height
+      });
     }
 
     if (imageInfo.isIcon) {
-      // Icons should be standard sizes (16, 20, 24, 32)
-      const standardSizes = [16, 20, 24, 32, 48];
-      const closestSize = standardSizes.reduce((prev, curr) =>
-        Math.abs(curr - imageInfo.width) < Math.abs(prev - imageInfo.width) ? curr : prev
-      );
-
-      enhancedNode.boundingBox = {
-        ...enhancedNode.boundingBox,
-        width: closestSize,
-        height: closestSize,
-      };
+      // Icons maintain their original size from the browser
+      logger.debug('Icon detected, keeping original size', {
+        nodeId: imageInfo.nodeId,
+        width: imageInfo.width,
+        height: imageInfo.height
+      });
     }
 
     return enhancedNode;

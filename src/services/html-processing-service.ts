@@ -214,6 +214,48 @@ export class HtmlProcessingService {
       conversion.meta.info.push('Playwright capture unavailable; used JSDOM fallback');
     }
 
+    // 이미지 데이터를 노드에 직접 적용
+    if (rootSnapshot) {
+      const applyImageDataToNodes = (nodes: FigmaNodeData[], snapshot: HTMLNodeSnapshot) => {
+        return nodes.map(node => {
+          // 해당 노드의 스냅샷 찾기
+          const findSnapshot = (snap: HTMLNodeSnapshot, targetId: string): HTMLNodeSnapshot | null => {
+            if (snap.id === targetId) return snap;
+            for (const child of snap.children) {
+              const found = findSnapshot(child, targetId);
+              if (found) return found;
+            }
+            return null;
+          };
+          
+          const nodeSnapshot = findSnapshot(snapshot, node.id);
+          if (nodeSnapshot && nodeSnapshot.imageData) {
+            // 이미지 데이터를 노드 메타에 직접 추가
+            node.meta = {
+              ...node.meta,
+              snapshot: {
+                imageData: nodeSnapshot.imageData,
+                isDownloadedImage: nodeSnapshot.isDownloadedImage,
+                tagName: nodeSnapshot.tagName,
+                attributes: nodeSnapshot.attributes
+              }
+            };
+            
+            logger.debug('Applied image data to node', {
+              nodeId: node.id,
+              nodeName: node.name,
+              hasImageData: !!nodeSnapshot.imageData,
+              isDownloadedImage: nodeSnapshot.isDownloadedImage
+            });
+          }
+          
+          return node;
+        });
+      };
+      
+      conversion.nodes = applyImageDataToNodes(conversion.nodes, rootSnapshot);
+    }
+
     const figmaTree = generateFigmaTree(conversion.nodes);
     const styleSystem = generateStyleSystem(conversion.nodes);
     const components = detectComponentPatterns(conversion.nodes);

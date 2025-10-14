@@ -329,3 +329,402 @@
 {"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T08:35:18.265Z"}
 {"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T08:35:18.277Z"}
 {"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T08:35:18.278Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:59:07.976Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T08:59:07.976Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T23:37:22.480Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-13T23:37:22.481Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T23:41:19.347Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T23:41:19.348Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-13T23:41:29.513Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760398889591-c4003d3c-e6b6-4c30-af11-91b05c87d645.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T23:41:29.594Z"}
+{"duration":10245.666499999992,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T23:41:29.595Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-13T23:41:29.630Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T23:41:29.643Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T23:41:29.652Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T23:41:29.653Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T23:45:45.500Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T23:45:45.501Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-13T23:45:55.077Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760399155147-dfe1b267-a743-4aeb-bd7e-31dcb16d5d35.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T23:45:55.148Z"}
+{"duration":9647.653799999971,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T23:45:55.149Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-13T23:45:55.165Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T23:45:55.168Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T23:45:55.169Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T23:45:55.170Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-13T23:50:40.522Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-13T23:50:40.522Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-13T23:50:49.682Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760399449782-6b6b285f-05e9-46fe-8c9f-4d9ab8a25caf.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-13T23:50:49.786Z"}
+{"duration":9264.242499999935,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-13T23:50:49.787Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-13T23:50:49.807Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-13T23:50:49.810Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-13T23:50:49.813Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-13T23:50:49.814Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:24:00.009Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:24:00.009Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-14T00:24:08.455Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760401448536-a5ba08ff-eab7-43a4-80ce-af86976d5c49.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:24:08.539Z"}
+{"duration":8529.285499999765,"elementCount":400,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:24:08.539Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:24:08.555Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:24:08.557Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:24:08.558Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:24:08.558Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:26:29.761Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:26:29.761Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Captured 7 image screenshots","timestamp":"2025-10-14T00:26:39.488Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760401599580-3b360462-0c21-43a3-b444-4d7929d858ec.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:26:39.582Z"}
+{"duration":9820.83570000017,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:26:39.582Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:26:39.605Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:26:39.610Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:26:39.612Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:26:39.612Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:30:58.401Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:08.977Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:09.010Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:15.573Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:15.576Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:49.249Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:31:49.255Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:32:42.919Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:32:42.920Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:32:52.529Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:32:52.530Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:32:52.791Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:32:52.791Z"}
+{"level":"info","message":"Captured 7 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:32:52.792Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760401972870-a90910ba-0767-48c4-8ab4-c58ad90a862a.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:32:52.873Z"}
+{"duration":9953.320500000002,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:32:52.874Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:32:52.931Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:32:52.942Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:32:52.953Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:32:52.953Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:33:36.241Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:33:36.241Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:33:45.443Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:33:45.443Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:33:45.636Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:33:45.636Z"}
+{"level":"info","message":"Captured 7 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:33:45.636Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402025717-5ec1b122-0db6-499f-8dae-10b844bbef5b.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:33:45.719Z"}
+{"duration":9478.668000000005,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:33:45.720Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:33:45.738Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:33:45.740Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:33:45.742Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:33:45.742Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:34:55.748Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:34:55.749Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:35:02.599Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:35:02.599Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:35:15.002Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:35:15.001Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:35:21.381Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:35:21.382Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:35:29.907Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:35:29.908Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:35:30.164Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:35:30.165Z"}
+{"level":"info","message":"Captured 6 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:35:30.166Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402130252-5d7290ca-6ab2-4a23-9271-d32946fcd02b.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:35:30.256Z"}
+{"duration":8873.6911,"elementCount":356,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:35:30.256Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 23 images (6 logos, 5 icons, 6 with image data)","timestamp":"2025-10-14T00:35:30.308Z"}
+{"level":"info","message":"Recognized 36 component patterns","timestamp":"2025-10-14T00:35:30.314Z"}
+{"issuesFound":92,"level":"info","message":"Validation completed","nodesValidated":97,"overallScore":96,"timestamp":"2025-10-14T00:35:30.319Z"}
+{"grade":"A","issuesCount":92,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:35:30.320Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:42.119Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:42.130Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:47.284Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:47.354Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:53.351Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:53.406Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:59.317Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:36:59.361Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:37:25.582Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:37:25.583Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:37:35.352Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:37:35.353Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:37:35.582Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:37:35.583Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:37:35.583Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402255656-91ce01e5-c742-47f2-8e2b-b5accc9505ee.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:37:35.659Z"}
+{"duration":10075.615299999998,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:37:35.659Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:37:35.702Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:37:35.708Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:37:35.713Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:37:35.714Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:38:57.429Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:39:01.952Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:39:01.959Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:39:09.605Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:39:09.629Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:39:13.049Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:39:13.049Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:39:22.921Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:39:22.923Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:39:23.183Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:39:23.184Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:39:23.186Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402363286-0efe13a4-9cfb-43c2-8180-2370ef85f100.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:39:23.289Z"}
+{"duration":10239.6391,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:39:23.290Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:39:23.352Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:39:23.363Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:39:23.382Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:39:23.382Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:40:59.948Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:40:59.973Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:41:09.541Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:41:09.557Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:41:23.197Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:41:23.197Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:41:31.966Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:41:31.967Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:41:32.238Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:41:32.238Z"}
+{"level":"info","message":"Captured 7 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:41:32.239Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402492316-ea28712a-7df1-4b42-9908-b5e5979b91cc.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:41:32.320Z"}
+{"duration":9121.939900000001,"elementCount":356,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:41:32.320Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 23 images (6 logos, 5 icons, 6 with image data)","timestamp":"2025-10-14T00:41:32.354Z"}
+{"level":"info","message":"Recognized 36 component patterns","timestamp":"2025-10-14T00:41:32.359Z"}
+{"issuesFound":92,"level":"info","message":"Validation completed","nodesValidated":97,"overallScore":96,"timestamp":"2025-10-14T00:41:32.364Z"}
+{"grade":"A","issuesCount":92,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:41:32.365Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:42:50.143Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:43:07.033Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:43:07.033Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:43:16.511Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:43:16.512Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:43:16.688Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:43:16.688Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:43:16.689Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402596785-5106c611-58ff-492f-8efe-351df796ce53.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:43:16.788Z"}
+{"duration":9754.968200000003,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:43:16.788Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:43:16.808Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:43:16.810Z"}
+{"issuesFound":121,"level":"info","message":"Validation completed","nodesValidated":126,"overallScore":96,"timestamp":"2025-10-14T00:43:16.811Z"}
+{"grade":"A","issuesCount":121,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:43:16.811Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.naver.com","targetUrl":"https://www.naver.com","timestamp":"2025-10-14T00:45:37.617Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.naver.com","timestamp":"2025-10-14T00:45:37.617Z","url":"https://www.naver.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:46:20.351Z"}
+{"level":"info","message":"Found 84 unique image URLs to download","timestamp":"2025-10-14T00:46:20.353Z"}
+{"level":"info","message":"Downloaded batch 1/17","timestamp":"2025-10-14T00:46:20.469Z"}
+{"level":"info","message":"Downloaded batch 2/17","timestamp":"2025-10-14T00:46:20.487Z"}
+{"level":"info","message":"Downloaded batch 3/17","timestamp":"2025-10-14T00:46:20.503Z"}
+{"level":"info","message":"Downloaded batch 4/17","timestamp":"2025-10-14T00:46:20.512Z"}
+{"level":"info","message":"Downloaded batch 5/17","timestamp":"2025-10-14T00:46:20.530Z"}
+{"level":"info","message":"Downloaded batch 6/17","timestamp":"2025-10-14T00:46:20.538Z"}
+{"level":"info","message":"Downloaded batch 7/17","timestamp":"2025-10-14T00:46:20.546Z"}
+{"level":"info","message":"Downloaded batch 8/17","timestamp":"2025-10-14T00:46:20.553Z"}
+{"level":"info","message":"Downloaded batch 9/17","timestamp":"2025-10-14T00:46:20.560Z"}
+{"level":"info","message":"Downloaded batch 10/17","timestamp":"2025-10-14T00:46:20.567Z"}
+{"level":"info","message":"Downloaded batch 11/17","timestamp":"2025-10-14T00:46:20.575Z"}
+{"level":"info","message":"Downloaded batch 12/17","timestamp":"2025-10-14T00:46:20.581Z"}
+{"level":"info","message":"Downloaded batch 13/17","timestamp":"2025-10-14T00:46:20.589Z"}
+{"level":"info","message":"Downloaded batch 14/17","timestamp":"2025-10-14T00:46:20.597Z"}
+{"level":"info","message":"Downloaded batch 15/17","timestamp":"2025-10-14T00:46:20.605Z"}
+{"level":"info","message":"Downloaded batch 16/17","timestamp":"2025-10-14T00:46:20.621Z"}
+{"level":"info","message":"Downloaded batch 17/17","timestamp":"2025-10-14T00:46:20.627Z"}
+{"level":"info","message":"Downloaded 84/84 images successfully","timestamp":"2025-10-14T00:46:20.627Z"}
+{"level":"info","message":"Captured 82 SVG screenshots and downloaded 84 images","timestamp":"2025-10-14T00:46:20.631Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402781208-8f9594e0-86a9-4648-b171-a76379bf79c5.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:46:21.214Z"}
+{"duration":43596.94040000002,"elementCount":1404,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:46:21.214Z","title":"NAVER","url":"https://www.naver.com","width":1920}
+{"level":"info","message":"Found 86 images (45 logos, 13 icons, 86 with image data)","timestamp":"2025-10-14T00:46:21.285Z"}
+{"level":"info","message":"Recognized 143 component patterns","timestamp":"2025-10-14T00:46:21.297Z"}
+{"issuesFound":1273,"level":"info","message":"Validation completed","nodesValidated":1261,"overallScore":96,"timestamp":"2025-10-14T00:46:21.308Z"}
+{"grade":"A","issuesCount":1273,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:46:21.309Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:18.109Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:18.179Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:18.328Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:43.017Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:43.020Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:47:43.036Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:49:20.619Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:49:20.634Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:49:20.866Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:49:37.858Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:49:37.858Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:49:47.745Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:49:47.746Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:49:47.991Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:49:47.991Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:49:47.992Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760402988077-01033928-7bfc-4062-86d5-71d1b83efafb.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:49:48.081Z"}
+{"duration":10221.5134,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:49:48.081Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:49:48.143Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:49:48.174Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T00:49:48.214Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:49:48.215Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:10.087Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:10.082Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:10.191Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:18.536Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:18.531Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:51:18.582Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:53:15.499Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:53:15.500Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:53:25.091Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:53:25.093Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:53:25.350Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:53:25.350Z"}
+{"level":"info","message":"Captured 7 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:53:25.351Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760403205430-5b57cb72-2f35-4385-b50f-42baf5421e36.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:53:25.432Z"}
+{"duration":9932.356700000004,"elementCount":355,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:53:25.433Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 23 images (6 logos, 5 icons, 6 with image data)","timestamp":"2025-10-14T00:53:25.460Z"}
+{"level":"info","message":"Recognized 36 component patterns","timestamp":"2025-10-14T00:53:25.466Z"}
+{"issuesFound":91,"level":"info","message":"Validation completed","nodesValidated":96,"overallScore":96,"timestamp":"2025-10-14T00:53:25.470Z"}
+{"grade":"A","issuesCount":91,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:53:25.470Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:25.221Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:25.221Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:25.267Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:36.407Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:36.426Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T00:54:36.456Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:54:46.969Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:54:46.970Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:54:56.669Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:54:56.670Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:54:56.932Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:54:56.933Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:54:56.934Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760403297026-98e446af-3fbf-4664-993b-581ff78a972a.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:54:57.030Z"}
+{"duration":10058.928600000001,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:54:57.031Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:54:57.064Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:54:57.072Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T00:54:57.076Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:54:57.077Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T00:58:03.898Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T00:58:03.899Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T00:58:13.175Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T00:58:13.176Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T00:58:13.353Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T00:58:13.353Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T00:58:13.354Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760403493424-87f8bf73-bff3-4528-afdf-19b872142b5e.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T00:58:13.426Z"}
+{"duration":9527.127799999987,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T00:58:13.426Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T00:58:13.442Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T00:58:13.444Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T00:58:13.445Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T00:58:13.445Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:01:08.332Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T01:02:58.177Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T01:02:58.178Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T01:03:08.033Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T01:03:08.034Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T01:03:08.382Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T01:03:08.382Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T01:03:08.383Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760403788465-7a2b5318-9773-492f-a48d-3ca0cdb315db.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T01:03:08.469Z"}
+{"duration":10290.646299999993,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T01:03:08.470Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T01:03:08.521Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T01:03:08.528Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T01:03:08.533Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T01:03:08.533Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:05:06.750Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:05:06.771Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:05:06.825Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:07:57.849Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:07:57.871Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:07:57.902Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:08:16.073Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:08:16.081Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:08:16.084Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T01:29:40.289Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T01:29:40.289Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T01:29:49.997Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T01:29:49.999Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T01:29:50.369Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T01:29:50.369Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T01:29:50.371Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760405390452-fc5253fa-4d16-4cd4-b5c8-b0d154aa521a.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T01:29:50.455Z"}
+{"duration":10165.524299999932,"elementCount":400,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T01:29:50.456Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T01:29:50.508Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T01:29:50.515Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T01:29:50.520Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T01:29:50.521Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:31:18.627Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T01:43:08.626Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T01:43:08.627Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T01:43:17.751Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T01:43:17.753Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T01:43:18.001Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T01:43:18.002Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T01:43:18.003Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760406198102-8eb5893c-6c61-41fb-95ed-875b3d339bdf.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T01:43:18.108Z"}
+{"duration":9480.431199999992,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T01:43:18.109Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (6 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T01:43:18.173Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T01:43:18.183Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T01:43:18.190Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T01:43:18.191Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:14.477Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:14.483Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:14.505Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:23.084Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:23.118Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:23.142Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:57.566Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:57.597Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:50:57.652Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T01:52:19.743Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T01:52:19.743Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T01:52:29.646Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T01:52:29.648Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T01:52:30.001Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T01:52:30.002Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T01:52:30.003Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760406750090-8bd69812-c2e3-4e70-a494-b3d018f5d5fd.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T01:52:30.094Z"}
+{"duration":10349.995900000009,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T01:52:30.094Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (0 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T01:52:30.153Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T01:52:30.164Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T01:52:30.170Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T01:52:30.171Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:53:39.440Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:53:39.454Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:53:39.456Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T01:56:08.033Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T01:56:08.034Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T01:56:18.031Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T01:56:18.032Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T01:56:18.321Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T01:56:18.322Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T01:56:18.323Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760406978420-ec1abd81-bc40-4418-ac23-aef9e106480f.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T01:56:18.424Z"}
+{"duration":10389.990099999995,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T01:56:18.425Z","title":"Google","url":"https://www.google.com","width":1920}
+{"level":"info","message":"Found 24 images (0 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T01:56:18.468Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T01:56:18.478Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T01:56:18.485Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T01:56:18.485Z"}
+{"level":"info","message":"Server listening on http://localhost:4000","timestamp":"2025-10-14T01:58:48.472Z"}
+{"level":"info","message":"Normalized URL for exact capture","originalUrl":"www.google.com","targetUrl":"https://www.google.com","timestamp":"2025-10-14T02:04:17.915Z"}
+{"level":"info","message":"Running exact replica capture","originalUrl":"www.google.com","timestamp":"2025-10-14T02:04:17.916Z","url":"https://www.google.com","viewport":{"height":1080,"width":1920}}
+{"level":"info","message":"Starting image download process...","timestamp":"2025-10-14T02:04:27.975Z"}
+{"level":"info","message":"Found 1 unique image URLs to download","timestamp":"2025-10-14T02:04:27.977Z"}
+{"level":"info","message":"Downloaded batch 1/1","timestamp":"2025-10-14T02:04:28.316Z"}
+{"level":"info","message":"Downloaded 1/1 images successfully","timestamp":"2025-10-14T02:04:28.316Z"}
+{"level":"info","message":"Captured 8 SVG screenshots and downloaded 1 images","timestamp":"2025-10-14T02:04:28.318Z"}
+{"filePath":"C:\\Users\\keduall\\HTF2\\uploads\\screenshots\\1760407468406-3240daca-e124-4b42-a7b2-940df7f08bdd.png","level":"info","message":"Stored screenshot artifact","timestamp":"2025-10-14T02:04:28.411Z"}
+{"duration":10494.287300000025,"elementCount":399,"height":1080,"level":"info","message":"Playwright capture completed","source":"url","timestamp":"2025-10-14T02:04:28.411Z","title":"Google","url":"https://www.google.com","width":1920}
+{"classes":"gb_F","hasImageData":true,"height":20,"id":"node-22","imageDataLength":310,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-22","position":{"x":1785,"y":16.5},"src":"svg-with-image","tagName":"svg","timestamp":"2025-10-14T02:04:28.450Z","width":20}
+{"classes":"lnXdpd","hasImageData":true,"height":20,"id":"node-34","imageDataLength":9866,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-34","position":{"x":824,"y":258},"src":"","tagName":"svg","timestamp":"2025-10-14T02:04:28.450Z","width":20}
+{"classes":"","hasImageData":false,"height":24,"id":"node-49","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-49","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.451Z","width":24}
+{"classes":"","hasImageData":true,"height":20,"id":"node-81","imageDataLength":682,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-81","position":{"x":683,"y":392},"src":"","tagName":"svg","timestamp":"2025-10-14T02:04:28.451Z","width":20}
+{"classes":"","hasImageData":false,"height":24,"id":"node-94","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-94","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.451Z","width":24}
+{"alt":"","classes":"yAnw3c","hasImageData":false,"height":0,"id":"node-101","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-101","position":{"x":1131,"y":390},"src":"/tia/tia.png","tagName":"img","timestamp":"2025-10-14T02:04:28.451Z","width":0}
+{"classes":"","hasImageData":true,"height":20,"id":"node-102","imageDataLength":338,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-102","position":{"x":1131,"y":390},"src":"","tagName":"svg","timestamp":"2025-10-14T02:04:28.451Z","width":20}
+{"classes":"goxjub","hasImageData":true,"height":20,"id":"node-106","imageDataLength":590,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-106","position":{"x":1171,"y":390},"src":"","tagName":"svg","timestamp":"2025-10-14T02:04:28.451Z","width":20}
+{"classes":"Gdd5U","hasImageData":true,"height":20,"id":"node-110","imageDataLength":654,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-110","position":{"x":1211,"y":390},"src":"","tagName":"svg","timestamp":"2025-10-14T02:04:28.452Z","width":20}
+{"classes":"","hasImageData":false,"height":24,"id":"node-124","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-124","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.452Z","width":24}
+{"alt":"","classes":"uHGFVd AZNDm","hasImageData":false,"height":0,"id":"node-144","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-144","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.453Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-146","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-146","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.453Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-147","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-147","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.453Z","width":0}
+{"classes":"","hasImageData":false,"height":24,"id":"node-165","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-165","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.453Z","width":24}
+{"classes":"","hasImageData":false,"height":24,"id":"node-183","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-183","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.453Z","width":24}
+{"alt":"","classes":"uHGFVd AZNDm","hasImageData":false,"height":0,"id":"node-189","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-189","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.454Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-191","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-191","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.454Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-192","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-192","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.454Z","width":0}
+{"classes":"","hasImageData":false,"height":24,"id":"node-214","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-214","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.454Z","width":24}
+{"alt":"","classes":"uHGFVd AZNDm","hasImageData":false,"height":0,"id":"node-220","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-220","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.454Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-222","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-222","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.455Z","width":0}
+{"alt":"","classes":"uHGFVd EOLKOc","hasImageData":false,"height":0,"id":"node-223","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-223","position":{"x":0,"y":0},"src":"","tagName":"img","timestamp":"2025-10-14T02:04:28.455Z","width":0}
+{"classes":"","hasImageData":false,"height":24,"id":"node-325","imageDataLength":0,"isIcon":false,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-325","position":{"x":0,"y":0},"src":"svg-element","tagName":"svg","timestamp":"2025-10-14T02:04:28.455Z","width":24}
+{"alt":"","classes":"","hasImageData":true,"height":48,"id":"node-365","imageDataLength":3278,"isIcon":true,"isLogo":false,"level":"info","message":"🖼️  Image found:","nodeId":"node-365","position":{"x":1416,"y":868},"src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAH8klEQVR4Ac","tagName":"img","timestamp":"2025-10-14T02:04:28.455Z","width":48}
+{"level":"info","message":"Found 24 images (0 logos, 6 icons, 7 with image data)","timestamp":"2025-10-14T02:04:28.455Z"}
+{"level":"info","message":"Recognized 38 component patterns","timestamp":"2025-10-14T02:04:28.464Z"}
+{"issuesFound":120,"level":"info","message":"Validation completed","nodesValidated":125,"overallScore":96,"timestamp":"2025-10-14T02:04:28.470Z"}
+{"grade":"A","issuesCount":120,"level":"info","message":"Conversion quality validation (before correction)","overallScore":96,"timestamp":"2025-10-14T02:04:28.471Z"}
