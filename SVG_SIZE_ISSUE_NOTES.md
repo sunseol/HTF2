@@ -152,3 +152,4 @@ actualHeight = imageSize.height;
 생성일: 2025-10-15
 작성자: Claude Code
 상태: 해결 실패 - 추가 조사 필요
+dsd
