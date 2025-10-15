@@ -139,7 +139,7 @@ const waitForImages = async (page: Page): Promise<void> => {
             img.addEventListener('load', finish, { once: true });
             img.addEventListener('error', finish, { once: true });
             setTimeout(finish, timeout);
-          });
+    });
 
         const waitForSvgImage = (svg: SVGElement, timeout: number) =>
           new Promise<void>((resolve) => {
@@ -176,15 +176,15 @@ const waitForImages = async (page: Page): Promise<void> => {
             linkedImage.addEventListener('load', finish, { once: true });
             linkedImage.addEventListener('error', finish, { once: true });
             setTimeout(finish, timeout);
-          });
+    });
 
         const waitPromises: Promise<void>[] = [];
         document.querySelectorAll('img').forEach((img) => {
           waitPromises.push(waitForImage(img, imageTimeout));
-        });
+    });
         document.querySelectorAll('svg').forEach((svg) => {
           waitPromises.push(waitForSvgImage(svg, svgTimeout));
-        });
+    });
 
         return Promise.all(waitPromises).then(() => undefined);
       },
@@ -197,25 +197,25 @@ const waitForImages = async (page: Page): Promise<void> => {
 
 const getAccurateImageSize = async (element: ElementHandle<Element>): Promise<{width: number, height: number}> => {
   return await element.evaluate((el: any) => {
-    const tagName = el.tagName.toLowerCase();
+    const elementTagName = el.tagName.toLowerCase();
     
-    if (tagName === 'img') {
-      // 실제 이미지 크기 확인
+    if (elementTagName === 'img') {
+      // ?�제 ?��?지 ?�기 ?�인
       const naturalWidth = el.naturalWidth;
       const naturalHeight = el.naturalHeight;
       const displayWidth = el.offsetWidth;
       const displayHeight = el.offsetHeight;
       
-      // CSS로 크기가 지정된 경우
+      // CSS�??�기가 지?�된 경우
       const computedStyle = window.getComputedStyle(el);
       const cssWidth = computedStyle.width;
       const cssHeight = computedStyle.height;
       
-      // 최종 크기 결정
+      // 최종 ?�기 결정
       let finalWidth = displayWidth;
       let finalHeight = displayHeight;
       
-      // CSS 크기가 픽셀 단위로 지정된 경우
+      // CSS ?�기가 ?��? ?�위�?지?�된 경우
       if (cssWidth && cssWidth !== 'auto' && cssWidth.includes('px')) {
         finalWidth = parseFloat(cssWidth);
       }
@@ -223,12 +223,12 @@ const getAccurateImageSize = async (element: ElementHandle<Element>): Promise<{w
         finalHeight = parseFloat(cssHeight);
       }
       
-      // 비율 유지 확인
+      // 비율 ?��? ?�인
       if (naturalWidth > 0 && naturalHeight > 0) {
         const naturalRatio = naturalWidth / naturalHeight;
         const displayRatio = finalWidth / finalHeight;
         
-        // 비율이 크게 다른 경우 원본 비율로 조정
+        // 비율???�게 ?�른 경우 ?�본 비율�?조정
         if (Math.abs(naturalRatio - displayRatio) > 0.1) {
           if (finalWidth > finalHeight) {
             finalHeight = finalWidth / naturalRatio;
@@ -241,8 +241,8 @@ const getAccurateImageSize = async (element: ElementHandle<Element>): Promise<{w
       return { width: finalWidth, height: finalHeight };
     }
     
-    if (tagName === 'svg') {
-      // SVG 크기는 실제 렌더링 크기만 사용 (가장 정확)
+    if (elementTagName === 'svg') {
+      // SVG ?�기???�제 ?�더�??�기�??�용 (가???�확)
       const rect = el.getBoundingClientRect();
       return { width: rect.width, height: rect.height };
     }
@@ -250,12 +250,12 @@ const getAccurateImageSize = async (element: ElementHandle<Element>): Promise<{w
     // 기본 경우
     const rect = el.getBoundingClientRect();
     return { width: rect.width, height: rect.height };
-  });
+    });
 };
 
 const getAccurateImagePosition = async (element: ElementHandle<Element>): Promise<{x: number, y: number}> => {
   return await element.evaluate((el: any) => {
-    // 부모 요소의 스크롤 오프셋 고려
+    // 부�??�소???�크�??�프??고려
     let offsetX = 0;
     let offsetY = 0;
     
@@ -269,12 +269,12 @@ const getAccurateImagePosition = async (element: ElementHandle<Element>): Promis
     const rect = el.getBoundingClientRect();
     const bodyRect = document.body.getBoundingClientRect();
     
-    // 정확한 위치 계산
+    // ?�확???�치 계산
     const x = rect.left - bodyRect.left + offsetX;
     const y = rect.top - bodyRect.top + offsetY;
     
     return { x, y };
-  });
+    });
 };
 
 const captureImageElementWithInfo = async (
@@ -298,7 +298,7 @@ const captureImageElementWithInfo = async (
       return null;
     }
 
-    // 정확한 크기와 위치 계산
+    // ?�확???�기?�??�치 계산
     const [accurateSize, accuratePosition, elementInfo] = await Promise.all([
       getAccurateImageSize(element),
       getAccurateImagePosition(element),
@@ -375,12 +375,12 @@ class PlaywrightCaptureEngine {
         .then((browser) => {
           process.once('exit', () => {
             void browser.close();
-          });
+    });
         })
         .catch((error) => {
           logger.error('Failed to launch Playwright browser', { error });
           throw error;
-        });
+    });
     }
     return this.browserPromise;
   }
@@ -403,10 +403,7 @@ class PlaywrightCaptureEngine {
     const context = await browser.newContext({
       viewport: { width, height },
       ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? true,
-      permissions: [], // 모든 권한 비활성화
-      extraHTTPHeaders: {
-        'Permissions-Policy': 'camera=(), microphone=(), clipboard-write=(), display-capture=()'
-      }
+      permissions: [], // 모든 권한 비활?�화
     });
     context.setDefaultNavigationTimeout(navigationTimeout);
     context.setDefaultTimeout(navigationTimeout);
@@ -420,23 +417,171 @@ class PlaywrightCaptureEngine {
       logger.info('capturePage: Page factory completed', { description });
       page.setDefaultNavigationTimeout(navigationTimeout);
       page.setDefaultTimeout(navigationTimeout);
-      
-      // Permissions Policy 강제 적용
+
+      const domStabilityConfig = {
+        maxWaitMs: options.domStabilityMaxWaitMs ?? 8000,
+        intervalMs: options.domStabilityIntervalMs ?? 250,
+        tolerance: options.domStabilityTolerance ?? 20,
+        stableIterations: options.domStabilityStableIterations ?? 3,
+      };
+
+      const minDomElementCount = options.domMinElementCount ?? 300;
+      const extraDomWaitBudgetMs = options.domAdditionalWaitMs ?? 5000;
+
+      const waitForDomStability = async (initialCount: number): Promise<{ stabilized: boolean; finalCount: number }> => {
+        const maxChecks = Math.max(1, Math.floor(domStabilityConfig.maxWaitMs / domStabilityConfig.intervalMs));
+        let previousCount = initialCount;
+        let finalCount = initialCount;
+        let stableSamples = 0;
+
+        for (let attempt = 0; attempt < maxChecks; attempt += 1) {
+          await page.waitForTimeout(domStabilityConfig.intervalMs);
+          const currentCount = await page.evaluate(() => document.querySelectorAll('*').length);
+          finalCount = currentCount;
+          const delta = Math.abs(currentCount - previousCount);
+
+          logger.debug('DOM stability probe', {
+            attempt: attempt + 1,
+            currentCount,
+            previousCount,
+            delta,
+            tolerance: domStabilityConfig.tolerance,
+            stableSamples,
+    });
+
+          if (delta <= domStabilityConfig.tolerance) {
+            stableSamples += 1;
+            if (stableSamples >= domStabilityConfig.stableIterations) {
+              return { stabilized: true, finalCount: currentCount };
+            }
+          } else {
+            stableSamples = 0;
+          }
+
+          previousCount = currentCount;
+        }
+
+        return { stabilized: false, finalCount };
+      };
+
+      const runDomStabilityCheck = async (label: string, initialCount: number): Promise<number> => {
+        const { stabilized, finalCount } = await waitForDomStability(initialCount);
+        if (stabilized) {
+          logger.info(`${label} DOM element count stabilized`, { elementCount: finalCount });
+        } else {
+          logger.warn(`${label} DOM stability window elapsed before counts stabilized`, {
+            elementCount: finalCount,
+            config: domStabilityConfig,
+    });
+        }
+        return finalCount;
+      };
+
+      // 브라?��? 콘솔 로그�?Node.js 로거�??�달
+      page.on('console', msg => {
+        const text = msg.text();
+        // Google 로고 관??로그�?출력
+        if (text.includes('[Google Logo]') || text.includes('[SVG')) {
+          logger.info(`[Browser Console] ${text}`);
+        }
+    });
+
+      // Permissions Policy 강제 ?�용
       await page.addInitScript(() => {
-        // Permissions Policy 메타 태그 추가
+        // Permissions Policy 메�? ?�그 추�?
         const meta = document.createElement('meta');
         meta.httpEquiv = 'Permissions-Policy';
         meta.content = 'camera=(), microphone=(), clipboard-write=(), display-capture=()';
         document.head.appendChild(meta);
-      });
-      
+    });
+
       await page.waitForTimeout(50);
 
-      const elementCount = await page.evaluate(() => document.querySelectorAll('*').length);
-      const domSnapshot = await page.content();
+      const initialElementCount = await page.evaluate(() => document.querySelectorAll('*').length);
+      logger.info('Initial DOM element count observed', { elementCount: initialElementCount });
+
+      let elementCount = await runDomStabilityCheck('Initial', initialElementCount);
+
 
       // Skip waiting for images to avoid hanging
       logger.info('Skipping image wait to avoid hanging');
+
+      // Scroll through the page to load all content and lazy-loaded elements
+      logger.info('Scrolling through page to load all content...');
+      try {
+        await page.evaluate(async () => {
+          // Get full page height
+          const getScrollHeight = () => Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+          );
+
+          let previousHeight = 0;
+          let currentHeight = getScrollHeight();
+          const scrollStep = 800; // Scroll 800px at a time
+          let scrollPosition = 0;
+
+          // Scroll down gradually to trigger lazy loading
+          while (scrollPosition < currentHeight) {
+            window.scrollTo(0, scrollPosition);
+            await new Promise(resolve => setTimeout(resolve, 100)); // Wait for lazy loading
+            scrollPosition += scrollStep;
+
+            // Check if page height increased (lazy loaded content)
+            previousHeight = currentHeight;
+            currentHeight = getScrollHeight();
+          }
+
+          // Scroll to bottom to ensure everything is loaded
+          window.scrollTo(0, currentHeight);
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+          // Scroll back to top
+          window.scrollTo(0, 0);
+          await new Promise(resolve => setTimeout(resolve, 100));
+    });
+        logger.info('Page scrolling completed');
+      } catch (error) {
+        logger.warn('Failed to scroll page', { error });
+      }
+
+      const postScrollElementCount = await page.evaluate(() => document.querySelectorAll('*').length);
+      if (postScrollElementCount !== elementCount) {
+        logger.info('DOM element count after scroll', {
+          before: elementCount,
+          after: postScrollElementCount,
+          delta: postScrollElementCount - elementCount,
+    });
+      } else {
+        logger.debug('DOM element count unchanged after scroll', { elementCount: postScrollElementCount });
+      }
+      elementCount = await runDomStabilityCheck('Post-scroll', postScrollElementCount);
+
+      if (elementCount < minDomElementCount && extraDomWaitBudgetMs > 0) {
+        let remainingWaitMs = extraDomWaitBudgetMs;
+        while (elementCount < minDomElementCount && remainingWaitMs > 0) {
+          const waitChunk = Math.min(500, remainingWaitMs);
+          await page.waitForTimeout(waitChunk);
+          remainingWaitMs -= waitChunk;
+          const currentCount = await page.evaluate(() => document.querySelectorAll('*').length);
+          if (currentCount !== elementCount) {
+            elementCount = await runDomStabilityCheck('Extended', currentCount);
+          }
+        }
+
+        if (elementCount < minDomElementCount) {
+          logger.warn('DOM element count remained below expected minimum', {
+            elementCount,
+            minDomElementCount,
+    });
+        } else {
+          logger.info('DOM element count increased above minimum after extended wait', { elementCount });
+        }
+      }
+
+      const domSnapshot = await page.content();
 
       // Assign temporary IDs to all image elements FIRST (in a single evaluation context)
       logger.info('Assigning temporary IDs to image elements...');
@@ -447,16 +592,16 @@ class PlaywrightCaptureEngine {
             if (!el.dataset.tmpId) {
               el.dataset.tmpId = `img-${index}-${Math.random().toString(36).substr(2, 9)}`;
             }
-          });
+    });
 
-          // SVG 내부의 image 요소들도 처리
+          // SVG ?��???image ?�소?�도 처리
           const svgImageElements = document.querySelectorAll('svg image');
           svgImageElements.forEach((el: any, index: number) => {
             if (!el.dataset.tmpId) {
               el.dataset.tmpId = `svg-img-${index}-${Math.random().toString(36).substr(2, 9)}`;
             }
-          });
-        });
+    });
+    });
         logger.info('Successfully assigned temporary IDs');
       } catch (error) {
         logger.warn('Failed to assign temporary IDs', { error });
@@ -465,38 +610,98 @@ class PlaywrightCaptureEngine {
       const imageScreenshots = new Map<string, string>();
       const accurateImageInfo = new Map<string, AccurateImageInfo>();
 
-      // 이미지 스크린샷 캡처 (간소화)
+      // ?��?지 ?�크린샷 캡처 (개선??
       logger.info('Capturing image screenshots...');
       try {
         const imageElements = await page.$$('img, svg');
         logger.info(`Found ${imageElements.length} image elements to capture`);
-        
-        // 최대 5개만 캡처하여 성능 우선 (중요한 이미지만)
-        const maxImages = Math.min(imageElements.length, 5);
-        for (let i = 0; i < maxImages; i++) {
-          const element = imageElements[i];
+
+        // 모든 ?��?지 캡처 (?�능 개선???�해 병렬 처리)
+        const capturePromises = imageElements.map(async (element, index) => {
           try {
             const tmpId = await element.evaluate((el: any) => el.dataset.tmpId);
-            if (tmpId) {
-              const screenshot = await Promise.race([
-                element.screenshot({ type: 'png', omitBackground: false }),
-                new Promise<Buffer>((_, reject) => 
-                  setTimeout(() => reject(new Error('Screenshot timeout')), 3000)
-                )
-              ]);
-              const dataUrl = `data:image/png;base64,${screenshot.toString('base64')}`;
-              imageScreenshots.set(tmpId, dataUrl);
-              logger.info('Captured image screenshot', { tmpId, size: screenshot.length, index: i + 1 });
+            if (!tmpId) return null;
+
+            // ?��?지가 보이?��? ?�인
+            const isVisible = await element.evaluate((el: any) => {
+              const rect = el.getBoundingClientRect();
+              const style = window.getComputedStyle(el);
+              return rect.width > 0 && rect.height > 0 &&
+                     style.display !== 'none' &&
+                     style.visibility !== 'hidden';
+    });
+
+            if (!isVisible) {
+              logger.debug('Skipping invisible image', { tmpId, index });
+              return null;
             }
+
+            const screenshot = await Promise.race([
+              element.screenshot({ type: 'png', omitBackground: false }),
+              new Promise<Buffer>((_, reject) =>
+                setTimeout(() => reject(new Error('Screenshot timeout')), 8000)
+              )
+            ]);
+            const dataUrl = `data:image/png;base64,${screenshot.toString('base64')}`;
+            logger.debug('Captured image screenshot', { tmpId, size: screenshot.length, index: index + 1 });
+            return { tmpId, dataUrl };
           } catch (error) {
-            logger.warn('Failed to capture image screenshot', { error: (error as Error).message, index: i + 1 });
+            logger.debug('Failed to capture image screenshot', { error: (error as Error).message, index: index + 1 });
+            return null;
           }
-        }
-        
-        logger.info(`Captured ${imageScreenshots.size} image screenshots`);
+    });
+
+        const results = await Promise.all(capturePromises);
+        results.forEach(result => {
+          if (result) {
+            imageScreenshots.set(result.tmpId, result.dataUrl);
+          }
+    });
+
+        logger.info(`Captured ${imageScreenshots.size} image screenshots out of ${imageElements.length} total`);
       } catch (error) {
         logger.warn('Image screenshot capture failed', { error: (error as Error).message });
       }
+
+      // ===== 1?�계: SVG ?�버�?- ?�제 ?�기 ?�인 =====
+      logger.info('?�� Debugging SVG sizes...');
+      const svgDebugInfo = await page.evaluate(() => {
+        const svgs = document.querySelectorAll('svg');
+        return Array.from(svgs).slice(0, 10).map(svg => {
+          const rect = svg.getBoundingClientRect();
+          const parentRect = svg.parentElement?.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(svg);
+          const parentComputedStyle = svg.parentElement ? window.getComputedStyle(svg.parentElement) : null;
+
+          return {
+            classes: Array.from(svg.classList).join(' '),
+            svgRect: { width: rect.width, height: rect.height },
+            svgComputed: { width: computedStyle.width, height: computedStyle.height },
+            svgAttributes: {
+              width: svg.getAttribute('width'),
+              height: svg.getAttribute('height'),
+              viewBox: svg.getAttribute('viewBox')
+            },
+            parentRect: parentRect ? { width: parentRect.width, height: parentRect.height } : null,
+            parentComputed: parentComputedStyle ? { width: parentComputedStyle.width, height: parentComputedStyle.height } : null,
+            parentTag: svg.parentElement?.tagName,
+            parentClasses: svg.parentElement ? Array.from(svg.parentElement.classList).join(' ') : ''
+          };
+    });
+    });
+
+      // �?SVG�?개별?�으�?로깅 (??가?�성 ?�게)
+      logger.info(`?�� Found ${svgDebugInfo.length} SVG elements to analyze`);
+      svgDebugInfo.forEach((svg, index) => {
+        logger.info(`SVG #${index + 1}:`, {
+          classes: svg.classes || '(no class)',
+          svgSize: `${svg.svgRect.width}x${svg.svgRect.height}`,
+          parentSize: svg.parentRect ? `${svg.parentRect.width}x${svg.parentRect.height}` : 'no parent',
+          parentTag: svg.parentTag || 'no parent',
+          computedStyle: svg.svgComputed,
+          attributes: svg.svgAttributes
+    });
+    });
 
       logger.info('Starting DOM snapshot extraction...');
       logger.info('Progress: DOM extraction started');
@@ -510,26 +715,43 @@ class PlaywrightCaptureEngine {
           const keys = styleKeys as string[];
           let counter = 0;
 
-          // SVG 내부의 image 요소들도 스냅샷에 포함
+          // SVG ?��???image ?�소?�도 ?�냅?�에 ?�함
           const svgImageElements = document.querySelectorAll('svg image');
           svgImageElements.forEach((el: any) => {
             if (!el.dataset.tmpId) {
               el.dataset.tmpId = `svg-img-${counter++}-${Math.random().toString(36).substr(2, 9)}`;
             }
-          });
+    });
           const nextId = () => `node-${counter++}`;
 
           // Get body element's offset for coordinate normalization
+          // Use scrollHeight to get full document height instead of viewport height
           const bodyRect = document.body.getBoundingClientRect();
           const bodyOffsetX = bodyRect.left;
           const bodyOffsetY = bodyRect.top;
 
+          // Get full document dimensions
+          const fullWidth = Math.max(
+            document.body.scrollWidth,
+            document.body.offsetWidth,
+            document.documentElement.scrollWidth,
+            document.documentElement.offsetWidth
+          );
+          const fullHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+          );
+
           console.log('[Playwright] Body offset:', {
             x: bodyOffsetX,
             y: bodyOffsetY,
-            width: bodyRect.width,
-            height: bodyRect.height
-          });
+            width: fullWidth,
+            height: fullHeight,
+            viewportWidth: bodyRect.width,
+            viewportHeight: bodyRect.height
+    });
 
           // Extract CSS variables from :root
           const extractCssVariables = (): Record<string, string> => {
@@ -553,7 +775,7 @@ class PlaywrightCaptureEngine {
             const styles: Record<string, string> = {};
             keys.forEach((key) => {
               styles[key] = computed.getPropertyValue(key);
-            });
+    });
 
             // Extract CSS variables used in this element
             const cssVariables: Record<string, string> = {};
@@ -567,58 +789,69 @@ class PlaywrightCaptureEngine {
             // Get precise bounding box with sub-pixel precision
             const rect = element.getBoundingClientRect();
 
-            // SVG 요소의 경우 실제 렌더링 크기 확인
+            // SVG �??��?지 ?�소???�제 ?�더�??�기 ?�인
             let actualWidth = rect.width;
             let actualHeight = rect.height;
 
-            if (element.tagName && element.tagName.toLowerCase() === 'svg') {
-              // SVG 크기 계산 개선
+            const elemTag = element.tagName && element.tagName.toLowerCase();
+
+            // For body element, use full document dimensions instead of viewport
+            if (elemTag === 'body') {
+              console.log('[Playwright] Body element detected - applying full dimensions:', {
+                viewportWidth: rect.width,
+                viewportHeight: rect.height,
+                fullWidth,
+                fullHeight
+    });
+              actualWidth = fullWidth;
+              actualHeight = fullHeight;
+            }
+
+            if (elemTag === 'svg') {
+              // SVG??getBoundingClientRect()�??�뢰 (가???�확)
+              // 브라?��?가 ?��? ?�확???�더�??�기�??�고 ?�음
+              actualWidth = rect.width;
+              actualHeight = rect.height;
+
+              // ?? ?�기가 0?�거???�무 ?��? 경우?�만 ?��?방법 ?�용
+              if (actualWidth <= 0 || actualHeight <= 0) {
+                const computedStyle = window.getComputedStyle(element);
+                const cssWidth = computedStyle.width;
+                const cssHeight = computedStyle.height;
+                const svgWidth = element.getAttribute('width');
+                const svgHeight = element.getAttribute('height');
+
+                if (cssWidth && cssWidth !== 'auto' && cssWidth.includes('px')) {
+                  actualWidth = parseFloat(cssWidth);
+                }
+                if (cssHeight && cssHeight !== 'auto' && cssHeight.includes('px')) {
+                  actualHeight = parseFloat(cssHeight);
+                }
+
+                if (actualWidth <= 0 && svgWidth && !svgWidth.includes('%')) {
+                  actualWidth = parseFloat(svgWidth);
+                }
+                if (actualHeight <= 0 && svgHeight && !svgHeight.includes('%')) {
+                  actualHeight = parseFloat(svgHeight);
+                }
+              }
+            } else if (elemTag === 'img') {
+              // IMG ?�소???�제 ?�기 ?�인
               const computedStyle = window.getComputedStyle(element);
               const cssWidth = computedStyle.width;
               const cssHeight = computedStyle.height;
-              
-              // SVG의 원본 크기 속성 확인
-              const svgWidth = element.getAttribute('width');
-              const svgHeight = element.getAttribute('height');
-              const viewBox = element.getAttribute('viewBox');
-              
-              // CSS 크기가 명시적으로 설정된 경우 우선 사용
+
+              // CSS�??�기가 ?�정??경우
               if (cssWidth && cssWidth !== 'auto' && cssWidth.includes('px')) {
                 actualWidth = parseFloat(cssWidth);
-              } else if (svgWidth && !svgWidth.includes('%')) {
-                actualWidth = parseFloat(svgWidth);
               }
-              
               if (cssHeight && cssHeight !== 'auto' && cssHeight.includes('px')) {
                 actualHeight = parseFloat(cssHeight);
-              } else if (svgHeight && !svgHeight.includes('%')) {
-                actualHeight = parseFloat(svgHeight);
               }
-              
-              // viewBox가 있는 경우 비율 계산
-              if (viewBox && actualWidth > 0 && actualHeight > 0) {
-                const viewBoxValues = viewBox.split(/[\s,]+/).map((v: string) => parseFloat(v));
-                if (viewBoxValues.length >= 4) {
-                  const [, , vbWidth, vbHeight] = viewBoxValues;
-                  if (vbWidth > 0 && vbHeight > 0) {
-                    const aspectRatio = vbWidth / vbHeight;
-                    const currentAspectRatio = actualWidth / actualHeight;
-                    
-                    // 비율이 맞지 않으면 높이를 기준으로 너비 조정
-                    if (Math.abs(currentAspectRatio - aspectRatio) > 0.1) {
-                      actualWidth = actualHeight * aspectRatio;
-                    }
-                  }
-                }
-              }
-              
-              // 최소 크기 보장 (너무 작으면 기본값 사용)
-              if (actualWidth < 1) actualWidth = rect.width || 20;
-              if (actualHeight < 1) actualHeight = rect.height || 20;
-              
-              // 최종 크기는 계산된 값과 실제 렌더링 크기 중 더 큰 값 사용
-              actualWidth = Math.max(actualWidth, rect.width);
-              actualHeight = Math.max(actualHeight, rect.height);
+
+              // 최소 ?�기 보장
+              if (actualWidth < 1) actualWidth = rect.width || 1;
+              if (actualHeight < 1) actualHeight = rect.height || 1;
             }
 
             // Normalize coordinates relative to body element
@@ -628,21 +861,21 @@ class PlaywrightCaptureEngine {
             const attrList = Array.from(element.attributes ?? []) as Attr[];
             attrList.forEach((attr) => {
               attributes[attr.name] = attr.value;
-            });
+    });
 
             // Get the temporary ID we assigned to image elements
             let imageData: string | undefined;
             let accurateImageInfo: any = undefined;
-            const tagName = element.tagName.toLowerCase();
+            const elementTagName = element.tagName.toLowerCase();
 
-            if (tagName === 'img' || tagName === 'svg') {
+            if (elementTagName === 'img' || elementTagName === 'svg') {
               // Get the temporary ID from dataset
               const tmpId = element.dataset?.tmpId;
               if (tmpId) {
                 // Store the ID so we can match it later
                 attributes['data-tmp-id'] = tmpId;
                 
-                // 정확한 이미지 정보 추가
+                // ?�확???��?지 ?�보 추�?
                 const accurateInfo = (window as any).accurateImageInfo?.get(tmpId);
                 if (accurateInfo) {
                   accurateImageInfo = {
@@ -669,15 +902,57 @@ class PlaywrightCaptureEngine {
               tagName: element.tagName.toLowerCase(),
               attributes,
               classes: Array.from(element.classList),
-              textContent: childElements.length === 0 ? (() => {
-                const rawText = (element.textContent ?? '').trim();
+                            textContent: childElements.length === 0 ? (() => {
+                const tagNameLower = element.tagName.toLowerCase();
+
+                const pullValueFromInput = () => {
+                  const value = (element as HTMLInputElement).value ?? element.getAttribute('value') ?? '';
+                  const aria = element.getAttribute('aria-label') ?? '';
+                  const placeholder = element.getAttribute('placeholder') ?? '';
+                  return value || placeholder || aria || '';
+                };
+
+                if (tagNameLower === 'input') {
+                  const inputType = (element.getAttribute('type') || '').toLowerCase();
+                  const candidate = pullValueFromInput().trim();
+                  if (candidate) {
+                    if (['submit', 'button', 'reset'].includes(inputType)) {
+                      return candidate;
+                    }
+                    if ((element as HTMLInputElement).value?.trim()) {
+                      return candidate;
+                    }
+                  }
+                }
+
+                if (tagNameLower === 'textarea') {
+                  const value = (element as HTMLTextAreaElement).value ?? element.getAttribute('value') ?? '';
+                  const placeholder = element.getAttribute('placeholder') ?? element.getAttribute('aria-label') ?? '';
+                  const candidate = (value || placeholder).trim();
+                  if (candidate) {
+                    return candidate;
+                  }
+                }
+
+                let rawText = (element.textContent ?? '').trim();
+
+                if (!rawText && (tagNameLower === 'button' || tagNameLower === 'input' || element.getAttribute('role') === 'button')) {
+                  rawText = (
+                    element.textContent?.trim()
+                    || (element as HTMLInputElement).value
+                    || element.getAttribute('value')
+                    || element.getAttribute('aria-label')
+                    || element.getAttribute('title')
+                    || ''
+                  ).trim();
+                }
+
                 if (!rawText) return null;
 
-                // 불필요한 텍스트 필터링
                 const unwantedTexts = [
-                  '구글 앱', 'Google 앱', 'google app',
-                  'HTML Import', 'HTML Import',
-                  'Loading...', '로딩 중...'
+                  'google app',
+                  'html import',
+                  'loading...'
                 ];
 
                 const isUnwanted = unwantedTexts.some(unwanted =>
@@ -686,14 +961,6 @@ class PlaywrightCaptureEngine {
 
                 if (isUnwanted) return null;
 
-                // 버튼 텍스트 정확도 향상
-                if (element.tagName === 'button' || element.tagName === 'input' || element.getAttribute('role') === 'button') {
-                  // 버튼의 경우 정확한 텍스트 유지
-                  const buttonText = element.textContent?.trim() || element.getAttribute('value') || element.getAttribute('aria-label') || rawText;
-                  return buttonText;
-                }
-
-                // 일반 텍스트의 경우 공백 정리
                 return rawText.replace(/\s+/g, ' ').trim();
               })() : null,
               boundingBox: {
@@ -746,91 +1013,187 @@ class PlaywrightCaptureEngine {
         { styleKeys: STYLE_PROPERTIES },
       ),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('DOM snapshot extraction timeout')), 3000)
+        setTimeout(() => reject(new Error('DOM snapshot extraction timeout')), options.domSnapshotTimeoutMs ?? 25000)
       )
       ]);
 
       const rootSnapshot = rootSnapshotRaw as unknown as HTMLNodeSnapshot;
       logger.info('Progress: DOM extraction completed');
 
-      // 이미지 다운로드 실행
+      // ===== 2?�계: Google 로고 최종 ?�기 ?�인 =====
+      const findGoogleLogoInSnapshot = (snapshot: any): any => {
+        if (snapshot.classes && snapshot.classes.includes('lnXdpd')) {
+          return snapshot;
+        }
+        for (const child of snapshot.children || []) {
+          const found = findGoogleLogoInSnapshot(child);
+          if (found) return found;
+        }
+        return null;
+      };
+
+      const googleLogoSnapshot = findGoogleLogoInSnapshot(rootSnapshot);
+      if (googleLogoSnapshot) {
+        logger.info('?�� [Google Logo] Found in snapshot:', {
+          nodeId: googleLogoSnapshot.id,
+          tagName: googleLogoSnapshot.tagName,
+          classes: googleLogoSnapshot.classes,
+          boundingBox: googleLogoSnapshot.boundingBox,
+          attributes: {
+            width: googleLogoSnapshot.attributes?.width,
+            height: googleLogoSnapshot.attributes?.height,
+            viewBox: googleLogoSnapshot.attributes?.viewBox
+          }
+    });
+      } else {
+        logger.warn('?�� [Google Logo] NOT FOUND in snapshot!');
+      }
+
+      // Fix body element bounding box to use full page dimensions
+      const fullPageDimensions = await page.evaluate(() => {
+        return {
+          fullWidth: Math.max(
+            document.body.scrollWidth,
+            document.body.offsetWidth,
+            document.documentElement.scrollWidth,
+            document.documentElement.offsetWidth
+          ),
+          fullHeight: Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+          )
+        };
+    });
+
+      logger.info('Full page dimensions calculated', fullPageDimensions);
+
+      // Apply full page dimensions to body element
+      if (rootSnapshot.tagName === 'body') {
+        logger.info('Applying full page dimensions to body element', {
+          before: rootSnapshot.boundingBox,
+          after: {
+            x: 0,
+            y: 0,
+            width: fullPageDimensions.fullWidth,
+            height: fullPageDimensions.fullHeight
+          }
+    });
+
+        rootSnapshot.boundingBox = {
+          x: 0,
+          y: 0,
+          width: fullPageDimensions.fullWidth,
+          height: fullPageDimensions.fullHeight
+        };
+      }
+
+      // ?��?지 ?�운로드 ?�행 (?�?�아??증�?)
       logger.info('Starting image download process...');
       logger.info('Progress: Image download started');
       const downloadedImages = await Promise.race([
         this.imageDownloadService.downloadImagesFromSnapshot(rootSnapshot),
-        new Promise<Map<string, any>>((_, reject) => 
-          setTimeout(() => reject(new Error('Image download timeout')), 5000)
+        new Promise<Map<string, any>>((_, reject) =>
+          setTimeout(() => reject(new Error('Image download timeout')), 15000)
         )
-      ]);
+      ]).catch((error) => {
+        logger.warn('Image download failed or timed out', { error: (error as Error).message });
+        return new Map<string, any>();
+    });
       logger.info('Progress: Image download completed');
       logger.info(`Downloaded ${downloadedImages.size} images`);
       
-      // 다운로드된 이미지를 스냅샷에 적용
+      // ?�운로드???��?지�??�냅?�에 ?�용 (개선??
       let appliedCount = 0;
       const applyDownloadedImages = (snapshot: HTMLNodeSnapshot) => {
-        // img 태그 처리
+        // img ?�그 처리
         if (snapshot.tagName === 'img' && snapshot.attributes?.src) {
           const src = snapshot.attributes.src;
           const downloadedImage = downloadedImages.get(src);
-          
+
           if (downloadedImage?.success && downloadedImage.data) {
             snapshot.imageData = downloadedImage.data;
             snapshot.isDownloadedImage = true;
             appliedCount++;
-            logger.info('Applied downloaded image', { src: src.substring(0, 50), format: downloadedImage.format, nodeId: snapshot.id });
-          } else {
-            logger.warn('Failed to apply downloaded image', { src: src.substring(0, 50), success: downloadedImage?.success, nodeId: snapshot.id });
+            logger.debug('Applied downloaded image', {
+              src: src.substring(0, 50),
+              format: downloadedImage.format,
+              nodeId: snapshot.id,
+              size: downloadedImage.data.length
+    });
+          } else if (src.startsWith('http')) {
+            logger.debug('Image download not available', {
+              src: src.substring(0, 50),
+              success: downloadedImage?.success,
+              nodeId: snapshot.id
+    });
           }
         }
-        
-        // SVG 내부의 image 요소 처리
+
+        // SVG ?��???image ?�소 처리
         if (snapshot.tagName === 'svg') {
           const findAndApplySvgImages = (svgSnapshot: HTMLNodeSnapshot) => {
+            let foundSvgImage = false;
             svgSnapshot.children.forEach((child: HTMLNodeSnapshot) => {
-              if (child.tagName === 'image' && child.attributes?.href) {
-                const href = child.attributes.href;
-                const downloadedImage = downloadedImages.get(href);
-                
-                if (downloadedImage?.success && downloadedImage.data) {
-                  // SVG 내부 이미지를 부모 SVG에 적용
-                  svgSnapshot.imageData = downloadedImage.data;
-                  svgSnapshot.isDownloadedImage = true;
-                  logger.debug('Applied downloaded SVG image', { href, format: downloadedImage.format });
+              if (child.tagName === 'image') {
+                const href = child.attributes?.href || child.attributes?.['xlink:href'];
+                if (href && href.startsWith('http')) {
+                  const downloadedImage = downloadedImages.get(href);
+
+                  if (downloadedImage?.success && downloadedImage.data) {
+                    // SVG ?��? ?��?지�?부�?SVG???�용
+                    svgSnapshot.imageData = downloadedImage.data;
+                    svgSnapshot.isDownloadedImage = true;
+                    foundSvgImage = true;
+                    appliedCount++;
+                    logger.debug('Applied downloaded SVG image', {
+                      href: href.substring(0, 50),
+                      format: downloadedImage.format,
+                      size: downloadedImage.data.length
+    });
+                  }
                 }
               }
-              // 재귀적으로 자식 노드들도 처리
-              findAndApplySvgImages(child);
-            });
+              // ?��??�으�??�식 ?�드?�도 처리
+              if (!foundSvgImage) {
+                findAndApplySvgImages(child);
+              }
+    });
           };
-          
+
           findAndApplySvgImages(snapshot);
         }
-        
+
         // CSS background-image 처리
         if (snapshot.styles?.['background-image']) {
           const bgImage = snapshot.styles['background-image'];
           const urlMatch = bgImage.match(/url\(['"]?([^'"]+)['"]?\)/);
-          
+
           if (urlMatch && urlMatch[1].startsWith('http')) {
             const downloadedImage = downloadedImages.get(urlMatch[1]);
-            
+
             if (downloadedImage?.success && downloadedImage.data) {
-              // background-image를 별도 이미지 노드로 변환
+              // background-image�?별도 ?��?지 ?�드�?변??
               snapshot.imageData = downloadedImage.data;
               snapshot.isDownloadedImage = true;
-              logger.debug('Applied downloaded background image', { url: urlMatch[1] });
+              appliedCount++;
+              logger.debug('Applied downloaded background image', {
+                url: urlMatch[1].substring(0, 50),
+                size: downloadedImage.data.length
+    });
             }
           }
         }
-        
-        // 자식 노드들도 처리
+
+        // ?�식 ?�드?�도 처리
         snapshot.children.forEach(applyDownloadedImages);
       };
 
       applyDownloadedImages(rootSnapshot);
       logger.info(`Applied ${appliedCount} downloaded images to snapshots`);
 
-      // 기존 이미지 스크린샷 적용 (원본 SVG만)
+      // 기존 ?��?지 ?�크린샷 ?�용 (?�본 SVG�?
       let appliedScreenshots = 0;
       const applyImageData = (snapshot: HTMLNodeSnapshot) => {
         const tmpId = snapshot.attributes['data-tmp-id'];
@@ -845,30 +1208,30 @@ class PlaywrightCaptureEngine {
               tmpId,
               tagName: snapshot.tagName,
               dataLength: screenshotData.length
-            });
+    });
           }
           // Clean up the temporary ID
           delete snapshot.attributes['data-tmp-id'];
         }
         
-        // SVG 내부의 image 요소들도 처리
+        // SVG ?��???image ?�소?�도 처리
         if (snapshot.tagName === 'svg') {
           snapshot.children.forEach((child: HTMLNodeSnapshot) => {
             if (child.tagName === 'image') {
               const childTmpId = child.attributes['data-tmp-id'];
               if (childTmpId && imageScreenshots.has(childTmpId)) {
-                // SVG 내부 이미지를 부모 SVG에 적용
+                // SVG ?��? ?��?지�?부�?SVG???�용
                 snapshot.imageData = imageScreenshots.get(childTmpId);
                 snapshot.isDownloadedImage = false;
                 
-                // SVG 내부 이미지의 위치를 부모 SVG에 반영
-                // child의 위치가 부모 SVG 내에서의 상대 위치이므로 이를 고려
+                // SVG ?��? ?��?지???�치�?부�?SVG??반영
+                // child???�치가 부�?SVG ?�에?�의 ?��? ?�치?��?�??��? 고려
                 const childX = child.boundingBox.x;
                 const childY = child.boundingBox.y;
                 const childWidth = child.boundingBox.width;
                 const childHeight = child.boundingBox.height;
                 
-                // 부모 SVG의 크기를 자식 이미지 크기에 맞춤 (필요한 경우)
+                // 부�?SVG???�기�??�식 ?��?지 ?�기??맞춤 (?�요??경우)
                 if (childWidth > 0 && childHeight > 0) {
                   snapshot.boundingBox = {
                     ...snapshot.boundingBox,
@@ -883,10 +1246,10 @@ class PlaywrightCaptureEngine {
                   tmpId: childTmpId,
                   childPosition: { x: childX, y: childY, width: childWidth, height: childHeight },
                   parentSize: { width: snapshot.boundingBox.width, height: snapshot.boundingBox.height }
-                });
+    });
               }
             }
-          });
+    });
         }
         
         snapshot.children.forEach(applyImageData);
@@ -928,7 +1291,7 @@ class PlaywrightCaptureEngine {
     } catch (error) {
       logger.error('Playwright capture failed', { error });
       
-      // 타임아웃 에러인 경우 더 구체적인 메시지 제공
+      // ?�?�아???�러??경우 ??구체?�인 메시지 ?�공
       if (error instanceof Error && error.message.includes('timeout')) {
         throw new Error(`Page rendering timeout: ${error.message}`);
       }

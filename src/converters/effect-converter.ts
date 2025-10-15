@@ -46,24 +46,26 @@ const parseLength = (value?: string): number => {
 };
 
 const parseSingleShadow = (shadow: string): FigmaEffect | undefined => {
-  const tokens = shadow.trim().split(/\s+/);
-  if (tokens.length < 3) return undefined;
+  let working = shadow.trim();
+  if (!working || working === 'none') return undefined;
 
   let inset = false;
-  let colorToken: string | undefined;
-  const lengthTokens: string[] = [];
+  if (/\binset\b/i.test(working)) {
+    inset = true;
+    working = working.replace(/\binset\b/gi, '').trim();
+  }
 
-  tokens.forEach((token) => {
-    if (token === 'inset') {
-      inset = true;
-      return;
-    }
-    if (token.startsWith('#') || token.startsWith('rgb')) {
-      colorToken = token;
-      return;
-    }
-    lengthTokens.push(token);
-  });
+  let colorToken: string | undefined;
+  const colorMatch = working.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})/);
+  if (colorMatch) {
+    colorToken = colorMatch[1];
+    const before = working.slice(0, colorMatch.index ?? 0);
+    const after = working.slice((colorMatch.index ?? 0) + colorMatch[1].length);
+    working = `${before} ${after}`.trim();
+  }
+
+  const lengthTokens = working.split(/\s+/).filter(Boolean);
+  if (lengthTokens.length < 2) return undefined;
 
   const [offsetXRaw, offsetYRaw, blurRaw, spreadRaw] = lengthTokens;
   const offset = { x: parseLength(offsetXRaw), y: parseLength(offsetYRaw) };

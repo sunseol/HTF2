@@ -230,24 +230,39 @@ export const enhanceImageNodes = (
       },
     } as any;
 
-    // For logos and icons, ensure proper sizing
-    let enhancedNode = { ...node, meta: enhancedMeta };
+    // Update node type to IMAGE if it has image data
+    let enhancedNode = {
+      ...node,
+      meta: enhancedMeta,
+      type: (imageInfo.imageData || imageInfo.src) ? 'IMAGE' : node.type
+    };
+
+    // Update bounding box with accurate image dimensions
+    if (imageInfo.width > 0 && imageInfo.height > 0) {
+      enhancedNode.boundingBox = {
+        ...enhancedNode.boundingBox,
+        width: imageInfo.width,
+        height: imageInfo.height
+      };
+    }
 
     if (imageInfo.isLogo) {
       // Logos maintain their original size from the browser
-      logger.debug('Logo detected, keeping original size', {
+      logger.debug('Logo detected, preserving size and position', {
         nodeId: imageInfo.nodeId,
         width: imageInfo.width,
-        height: imageInfo.height
+        height: imageInfo.height,
+        hasImageData: !!imageInfo.imageData
       });
     }
 
     if (imageInfo.isIcon) {
       // Icons maintain their original size from the browser
-      logger.debug('Icon detected, keeping original size', {
+      logger.debug('Icon detected, preserving size', {
         nodeId: imageInfo.nodeId,
         width: imageInfo.width,
-        height: imageInfo.height
+        height: imageInfo.height,
+        hasImageData: !!imageInfo.imageData
       });
     }
 

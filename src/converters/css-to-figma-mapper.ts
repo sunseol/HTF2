@@ -146,23 +146,90 @@ const parseBorderWidths = (styles: Record<string, string>): number[] => {
 };
 
 const createStrokePaints = (styles: Record<string, string>): StrokeConversionResult => {
-  const widthValues = parseBorderWidths(styles);
-  const maxWidth = widthValues.length > 0 ? Math.max(...widthValues) : 0;
-  if (!hasBorderStyle(styles) || maxWidth <= 0) {
+  const splitCssValues = (value?: string): string[] => {
+    if (!value) return [];
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    const tokens: string[] = [];
+    let current = '';
+    let depth = 0;
+    for (const char of trimmed) {
+      if (char === '(') {
+        depth += 1;
+      } else if (char === ')') {
+        depth = Math.max(0, depth - 1);
+      }
+      if (char === ' ' && depth === 0) {
+        if (current) {
+          tokens.push(current);
+          current = '';
+        }
+      } else {
+        current += char;
+      }
+    }
+    if (current) {
+      tokens.push(current);
+    }
+    return tokens;
+  };
+
+  const valueForSide = (values: string[], index: number): string | undefined => {
+    if (values.length === 0) return undefined;
+    if (values.length === 1) return values[0];
+    if (values.length === 2) return index % 2 === 0 ? values[0] : values[1];
+    if (values.length === 3) {
+      if (index === 0) return values[0];
+      if (index === 2) return values[2];
+      return values[1];
+    }
+    return values[index] ?? values[0];
+  };
+
+  const borderWidthTokens = splitCssValues(styles['border-width']);
+  const borderColorTokens = splitCssValues(styles['border-color']);
+  const borderStyleTokens = splitCssValues(styles['border-style']);
+
+  const sides = ['top', 'right', 'bottom', 'left'].map((side, index) => {
+    const width = parseNumeric(styles[`border-${side}-width`]) ?? parseNumeric(valueForSide(borderWidthTokens, index)) ?? 0;
+    const colorValue = styles[`border-${side}-color`] ?? valueForSide(borderColorTokens, index);
+    const styleValue = (styles[`border-${side}-style`] ?? valueForSide(borderStyleTokens, index) ?? '').toLowerCase();
+    const paint = colorValue ? hexToPaint(colorValue) ?? rgbToPaint(colorValue) : undefined;
+    const alpha = paint?.color?.a ?? 1;
+    return {
+      width,
+      colorValue,
+      paint,
+      style: styleValue,
+      alpha,
+    };
+  });
+
+  const visibleSides = sides.filter((side) => side.width > 0 && side.style && side.style !== 'none' && side.alpha > 0);
+  if (visibleSides.length === 0) {
     return { paints: undefined, token: undefined, weight: undefined, align: undefined };
   }
 
-  const borderColor = styles["border-color"] ?? styles.border;
-  if (!borderColor || borderColor === "none") {
+  const maxWidth = Math.max(...visibleSides.map((side) => side.width));
+  if (maxWidth <= 0) {
     return { paints: undefined, token: undefined, weight: undefined, align: undefined };
   }
 
-  const paint = hexToPaint(borderColor) ?? rgbToPaint(borderColor);
+  const chosenSide = visibleSides[0];
+  const paint = chosenSide.paint ?? (() => {
+    const fallback = styles["border-color"] ?? styles.border;
+    return fallback ? hexToPaint(fallback) ?? rgbToPaint(fallback) : undefined;
+  })();
+
   if (!paint || (paint.color?.a !== undefined && paint.color.a <= 0)) {
     return { paints: undefined, token: undefined, weight: undefined, align: undefined };
   }
 
-  const token = findColorToken(borderColor.toLowerCase()) ?? findColorToken(extractHexFromPaint(paint));
+  const borderColorTokenSource = chosenSide.colorValue ?? styles["border-color"] ?? styles.border ?? '';
+  const token = borderColorTokenSource
+    ? findColorToken(borderColorTokenSource.toLowerCase()) ?? findColorToken(extractHexFromPaint(paint))
+    : findColorToken(extractHexFromPaint(paint));
+
   return {
     paints: [paint],
     token,
@@ -340,7 +407,15 @@ const mapStylesToFigma = (snapshot: HTMLNodeSnapshot): StyleMappingResult => {
     };
   }
 
-  const isIcon = snapshot.tagName === "svg" || /icon/.test(classString);
+  const isSvgElement = snapshot.tagName === "svg";
+  const boundingWidth = snapshot.boundingBox?.width ?? 0;
+  const boundingHeight = snapshot.boundingBox?.height ?? 0;
+  const classIndicatesLogo = /logo/.test(classString);
+  const classIndicatesIcon = /icon/.test(classString);
+  const isSmallGraphic = (boundingWidth > 0 && boundingHeight > 0)
+    ? Math.max(boundingWidth, boundingHeight) <= 96
+    : true;
+  const isIcon = !classIndicatesLogo && isSmallGraphic && (isSvgElement || classIndicatesIcon);
   const isRoundIcon = isIcon && /round|circle/.test(classString);
   if (isIcon) {
     const targetSize = isRoundIcon ? 24 : 20;
@@ -414,10 +489,18 @@ const mapStylesToFigma = (snapshot: HTMLNodeSnapshot): StyleMappingResult => {
 const toFigmaNode = (snapshot: HTMLNodeSnapshot, styles: StyleMappingResult): FigmaNodeData => {
   // Determine node type - check for images first
   let nodeType: FigmaNodeData["type"] = "FRAME";
-  if (snapshot.textContent) {
+
+  // Check if snapshot has image data
+  const hasImageData = !!(snapshot.imageData && snapshot.imageData.startsWith('data:image/'));
+
+  if (snapshot.textContent && !hasImageData) {
     nodeType = "TEXT";
-  } else if (snapshot.tagName === 'img' || snapshot.tagName === 'svg') {
+  } else if ((snapshot.tagName === 'img' || snapshot.tagName === 'svg') && hasImageData) {
+    // Only mark as IMAGE if we have actual image data
     nodeType = "IMAGE";
+  } else if (snapshot.tagName === 'img' || snapshot.tagName === 'svg') {
+    // SVG or IMG without image data stays as FRAME (will be processed later)
+    nodeType = "FRAME";
   }
 
   const metaTokens = styles.tokens;
@@ -432,6 +515,7 @@ const toFigmaNode = (snapshot: HTMLNodeSnapshot, styles: StyleMappingResult): Fi
     layoutInfo: snapshot.layoutInfo,
     gridLayout: (styles.layout as any)?.gridLayout,
     imageData: snapshot.imageData, // Pass through base64 image data
+    isDownloadedImage: snapshot.isDownloadedImage, // Track if image was downloaded
   };
 
   return {

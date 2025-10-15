@@ -7,6 +7,13 @@ export interface RenderHtmlOptions {
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
   navigationTimeoutMs?: number;
   ignoreHTTPSErrors?: boolean;
+  domStabilityMaxWaitMs?: number;
+  domStabilityIntervalMs?: number;
+  domStabilityTolerance?: number;
+  domStabilityStableIterations?: number;
+  domMinElementCount?: number;
+  domAdditionalWaitMs?: number;
+  domSnapshotTimeoutMs?: number;
 }
 
 export interface RenderedHtmlArtifact {
